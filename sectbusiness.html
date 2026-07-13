@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | My Business</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only this page's specific rules are defined here. */
+
+    .form-grid {
+      display: grid;
+      gap: 16px;
+      max-width: 560px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 800;
+      font-size: 0.88rem;
+      margin-bottom: 6px;
+    }
+
+    .field p.hint {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fbf8ff;
+    }
+
+    .checkbox-row input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .checkbox-row label {
+      font-weight: 700;
+      font-size: 0.92rem;
+      margin: 0;
+    }
+
+    .preview-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #fff;
+      padding: 16px;
+      margin-top: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge.business {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .badge.essential {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .checkbox-row {
+      justify-content: space-between;
+    }
+
+    .checkbox-row .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checkbox-row .edit-link {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* ESSENTIAL WORKER DIALOG */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 8, 47, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .call-modal {
+      width: min(420px, 100%);
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+      padding: 22px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Directory Visibility</strong>
+        <p>Anything saved here is shown to other members in the Community Directory.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>My Business</h2>
+            <p>List a local business and let other members know if you're an essential worker.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Member</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="section-card">
+        <div class="section-header">
+          <div>
+            <h3>Business Listing</h3>
+            <p>Leave the business name blank if you don't run a local business.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="businessName">Business Name</label>
+            <input id="businessName" type="text" placeholder="e.g. Miller's Mini Mart" />
+          </div>
+
+          <div class="field">
+            <label for="businessDescription">Business Description</label>
+            <textarea id="businessDescription" rows="3" placeholder="What do you offer the community?"></textarea>
+            <p class="hint">Shown on your directory profile so other members know what you offer.</p>
+          </div>
+
+          <div class="checkbox-row">
+            <div class="checkbox-label">
+              <input id="essentialWorker" type="checkbox" onchange="handleEssentialWorkerToggle()" />
+              <label for="essentialWorker">I am an essential worker</label>
+            </div>
+            <span class="edit-link" id="essentialWorkerSummary" style="display: none;" onclick="openEssentialWorkerModal()"></span>
+          </div>
+
+          <div>
+            <button class="btn btn-primary" onclick="saveBusiness()">Save Changes</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card" style="margin-top: 20px;">
+        <div class="section-header">
+          <div>
+            <h3>Directory Preview</h3>
+            <p>This is how you currently appear to other members.</p>
+          </div>
+        </div>
+
+        <div class="preview-card">
+          <div style="display:flex; justify-content: space-between; align-items:flex-start; gap: 12px; flex-wrap: wrap;">
+            <div>
+              <strong id="previewName">Your Name</strong>
+              <p id="previewDescription" style="color: var(--muted); font-size: 0.88rem; margin-top: 4px;">No business listed yet.</p>
+            </div>
+            <div class="badge-row" id="previewBadges" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+          </div>
+          <p id="previewEssentialDetail" style="display:none; color: var(--muted); font-size: 0.82rem; margin-top: 10px;"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Essential Worker Details Dialog -->
+  <div class="modal-backdrop" id="essentialWorkerModal">
+    <div class="call-modal">
+      <h3 style="margin-bottom: 6px;">Essential Worker Details</h3>
+      <p style="color: var(--muted); font-size: 0.86rem; margin-bottom: 18px;">
+        Shown on your directory profile alongside the essential worker badge.
+      </p>
+
+      <div class="field">
+        <label for="ewType">Type of Essential Work</label>
+        <input id="ewType" type="text" placeholder="e.g. Registered Nurse, Firefighter, Grocery Worker" />
+      </div>
+
+      <div class="field">
+        <label for="ewRegNumber">Registration / License Number</label>
+        <input id="ewRegNumber" type="text" placeholder="e.g. RN-2024-00123" />
+      </div>
+
+      <div class="modal-actions" style="margin-top: 6px;">
+        <button class="btn btn-light" onclick="cancelEssentialWorkerModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmEssentialWorkerDetails()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let essentialWorkerType = "";
+    let essentialWorkerRegNumber = "";
+
+    function renderPreview(profile) {
+      document.getElementById("previewName").textContent = profile.name;
+      document.getElementById("previewDescription").textContent =
+        profile.businessDescription || (profile.businessName ? "" : "No business listed yet.");
+
+      const badges = document.getElementById("previewBadges");
+      badges.innerHTML = `
+        ${profile.businessName ? `<span class="badge business">🏪 ${profile.businessName}</span>` : ""}
+        ${profile.essentialWorker ? `<span class="badge essential">🚑 Essential Worker</span>` : ""}
+      `;
+
+      const detail = document.getElementById("previewEssentialDetail");
+      if (profile.essentialWorker && profile.essentialWorkerType) {
+        detail.textContent = `${profile.essentialWorkerType} · Reg# ${profile.essentialWorkerRegistrationNumber || "—"}`;
+        detail.style.display = "block";
+      } else {
+        detail.style.display = "none";
+      }
+    }
+
+    function updateEssentialWorkerSummary() {
+      const summary = document.getElementById("essentialWorkerSummary");
+      if (essentialWorkerType && essentialWorkerRegNumber) {
+        summary.textContent = `✏️ ${essentialWorkerType} · Reg# ${essentialWorkerRegNumber}`;
+        summary.style.display = "inline";
+      } else {
+        summary.style.display = "none";
+      }
+    }
+
+    function handleEssentialWorkerToggle() {
+      const checkbox = document.getElementById("essentialWorker");
+      if (checkbox.checked) {
+        openEssentialWorkerModal();
+      } else {
+        essentialWorkerType = "";
+        essentialWorkerRegNumber = "";
+        updateEssentialWorkerSummary();
+      }
+    }
+
+    function openEssentialWorkerModal() {
+      document.getElementById("ewType").value = essentialWorkerType;
+      document.getElementById("ewRegNumber").value = essentialWorkerRegNumber;
+      document.getElementById("essentialWorkerModal").classList.add("show");
+    }
+
+    function cancelEssentialWorkerModal() {
+      document.getElementById("essentialWorkerModal").classList.remove("show");
+      // No confirmed details yet (fresh toggle-on) — revert the checkbox.
+      if (!essentialWorkerType || !essentialWorkerRegNumber) {
+        document.getElementById("essentialWorker").checked = false;
+      }
+    }
+
+    function confirmEssentialWorkerDetails() {
+      const type = document.getElementById("ewType").value.trim();
+      const regNumber = document.getElementById("ewRegNumber").value.trim();
+
+      if (!type || !regNumber) {
+        showToast("Enter both the type of essential work and a registration number.");
+        return;
+      }
+
+      essentialWorkerType = type;
+      essentialWorkerRegNumber = regNumber;
+      document.getElementById("essentialWorker").checked = true;
+      document.getElementById("essentialWorkerModal").classList.remove("show");
+      updateEssentialWorkerSummary();
+    }
+
+    async function loadProfile() {
+      let profile;
+      try {
+        profile = await window.Tit4TatAPI.getMyProfile();
+      } catch (err) {
+        showToast("Could not load your profile.");
+        return;
+      }
+
+      document.getElementById("businessName").value = profile.businessName || "";
+      document.getElementById("businessDescription").value = profile.businessDescription || "";
+      document.getElementById("essentialWorker").checked = !!profile.essentialWorker;
+      essentialWorkerType = profile.essentialWorkerType || "";
+      essentialWorkerRegNumber = profile.essentialWorkerRegistrationNumber || "";
+      updateEssentialWorkerSummary();
+
+      renderPreview(profile);
+    }
+
+    async function saveBusiness() {
+      const isEssential = document.getElementById("essentialWorker").checked;
+
+      if (isEssential && (!essentialWorkerType || !essentialWorkerRegNumber)) {
+        showToast("Please provide your essential worker details first.");
+        openEssentialWorkerModal();
+        return;
+      }
+
+      const payload = {
+        businessName: document.getElementById("businessName").value.trim() || null,
+        businessDescription: document.getElementById("businessDescription").value.trim() || null,
+        isEssentialWorker: isEssential,
+        essentialWorkerType: isEssential ? essentialWorkerType : null,
+        essentialWorkerRegistrationNumber: isEssential ? essentialWorkerRegNumber : null
+      };
+
+      let profile;
+      try {
+        profile = await window.Tit4TatAPI.updateMyBusiness(payload);
+      } catch (err) {
+        showToast(err.message || "Could not save changes.");
+        return;
+      }
+
+      renderPreview(profile);
+      showToast("Saved. Other members will see this in the Directory.");
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+      if (currentUser.role !== "MEMBER") {
+        window.location.href = "secta.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "business", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      await loadProfile();
+    })();
+  </script>
+</body>
+</html>

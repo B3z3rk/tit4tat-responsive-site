@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Admin</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only admin-page-specific rules are defined here. */
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    @media (max-width: 900px) {
+      .two-col-grid { grid-template-columns: 1fr; }
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .summary-card small {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .summary-card h3 {
+      font-size: 1.6rem;
+      margin: 6px 0 2px;
+    }
+
+    .summary-card.warn h3 { color: var(--danger); }
+
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+
+    .list-row:last-child { border-bottom: none; }
+    .list-row strong { display: block; font-size: 0.9rem; }
+    .list-row small { color: var(--muted); }
+
+    .approval-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fff;
+      display: grid;
+      gap: 12px;
+    }
+
+    .approval-card + .approval-card {
+      margin-top: 12px;
+    }
+
+    .approval-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      display: block;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .announcement-item {
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      background: var(--primary-light);
+      border-radius: 0 12px 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .announcement-item:last-child { margin-bottom: 0; }
+    .announcement-item h4 { font-size: 0.95rem; margin-bottom: 3px; }
+    .announcement-item p { color: var(--text); font-size: 0.87rem; line-height: 1.4; }
+    .announcement-item small { color: var(--muted); }
+    .announcement-item button { flex-shrink: 0; }
+
+    .approval-top h4 {
+      font-size: 1rem;
+      margin-bottom: 3px;
+    }
+
+    .approval-top span {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .approval-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge.uploaded { color: #166534; background: #dcfce7; }
+    .badge.missing  { color: #92400e; background: #fef3c7; }
+
+    .approval-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .approval-actions select {
+      width: auto;
+    }
+
+    .empty-note {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      font-size: 0.9rem;
+    }
+
+    .log-table-wrap {
+      overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 520px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th { color: var(--muted); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Admin Tools</strong>
+        <p>Review new members and keep an eye on emergency call activity.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Admin Dashboard</h2>
+            <p>Overview, member approvals, and emergency call activity.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Admin User</strong>
+              <small id="userRole">Admin</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="content-grid">
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Overview</h3>
+              <p>A quick snapshot of what needs attention right now.</p>
+            </div>
+          </div>
+          <div class="summary-grid" id="overviewStats"></div>
+        </section>
+
+        <section class="two-col-grid">
+          <section class="section-card">
+            <div class="section-header">
+              <div>
+                <h3>Recent Registrations</h3>
+                <p>The latest people who signed up, approved or not.</p>
+              </div>
+            </div>
+            <div id="recentSignups"></div>
+          </section>
+
+          <section class="section-card">
+            <div class="section-header">
+              <div>
+                <h3>Recent Reports</h3>
+                <p>The latest community reports submitted.</p>
+              </div>
+            </div>
+            <div id="recentReports"></div>
+          </section>
+        </section>
+
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Pending Approvals</h3>
+              <p>New registrations are held here until an admin reviews their references, ID, and utility bill.</p>
+            </div>
+          </div>
+          <div id="pendingList"></div>
+        </section>
+
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Announcements</h3>
+              <p>Post a community-wide announcement. It appears on every member's dashboard.</p>
+            </div>
+          </div>
+          <div style="display: grid; gap: 10px; margin-bottom: 18px;">
+            <label>Title<input id="announcementTitle" placeholder="Example: Road closed on Main Street" /></label>
+            <label>Message<textarea id="announcementBody" placeholder="Details for the community..."></textarea></label>
+            <button class="btn btn-primary" style="justify-self: start;" onclick="postAnnouncement()">Post Announcement</button>
+          </div>
+          <div id="announcementsList"></div>
+        </section>
+
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Emergency Call Log</h3>
+              <p>A record of every emergency/tap-call attempt made from the app.</p>
+            </div>
+          </div>
+          <div class="log-table-wrap">
+            <table>
+              <thead>
+                <tr><th>Caller</th><th>Target</th><th>Type</th><th>Time</th></tr>
+              </thead>
+              <tbody id="callLogTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    async function renderOverview() {
+      const statsEl = document.getElementById("overviewStats");
+      const signupsEl = document.getElementById("recentSignups");
+      const reportsEl = document.getElementById("recentReports");
+
+      let overview;
+      try {
+        overview = await window.Tit4TatAPI.getAdminOverview();
+      } catch (err) {
+        statsEl.innerHTML = `<div class="empty-note">Could not load the overview.</div>`;
+        return;
+      }
+
+      statsEl.innerHTML = `
+        <div class="summary-card ${overview.pendingApprovals > 0 ? "warn" : ""}">
+          <small>Pending Approvals</small>
+          <h3>${overview.pendingApprovals}</h3>
+        </div>
+        <div class="summary-card">
+          <small>Total Members</small>
+          <h3>${overview.totalMembers}</h3>
+        </div>
+        <div class="summary-card">
+          <small>Total Activities</small>
+          <h3>${overview.totalActivities}</h3>
+        </div>
+        <div class="summary-card">
+          <small>Open Reports</small>
+          <h3>${overview.openReports}</h3>
+        </div>
+        <div class="summary-card ${overview.urgentReports > 0 ? "warn" : ""}">
+          <small>Urgent Reports</small>
+          <h3>${overview.urgentReports}</h3>
+        </div>
+      `;
+
+      signupsEl.innerHTML = overview.recentSignups.length
+        ? overview.recentSignups.map(u => `
+            <div class="list-row">
+              <div>
+                <strong>${u.name}</strong>
+                <small>${u.email}</small>
+              </div>
+              <span class="badge ${u.approvalStatus === "approved" ? "uploaded" : "missing"}">${u.approvalStatus}</span>
+            </div>
+          `).join("")
+        : `<div class="empty-note">No registrations yet.</div>`;
+
+      reportsEl.innerHTML = overview.recentReports.length
+        ? overview.recentReports.map(r => `
+            <div class="list-row">
+              <div>
+                <strong>${r.title}</strong>
+                <small>${r.id} · ${r.date}</small>
+              </div>
+              <span class="badge ${r.status === "Resolved" ? "uploaded" : "missing"}">${r.status}</span>
+            </div>
+          `).join("")
+        : `<div class="empty-note">No reports yet.</div>`;
+    }
+
+    function uploadBadge(label, uploaded) {
+      return uploaded
+        ? `<span class="badge uploaded">✅ ${label} attached</span>`
+        : `<span class="badge missing">⚠️ ${label} missing</span>`;
+    }
+
+    async function renderPending() {
+      const pendingList = document.getElementById("pendingList");
+      let pending;
+      try {
+        pending = await window.Tit4TatAPI.getPendingUsers();
+      } catch (err) {
+        pendingList.innerHTML = `<div class="empty-note">Could not load pending approvals.</div>`;
+        return;
+      }
+
+      if (pending.length === 0) {
+        pendingList.innerHTML = `<div class="empty-note">No pending registrations right now.</div>`;
+        return;
+      }
+
+      pendingList.innerHTML = pending.map(user => `
+        <div class="approval-card">
+          <div class="approval-top">
+            <div>
+              <h4>${user.name}</h4>
+              <span>${user.email}${user.communityArea ? " · " + user.communityArea : ""}</span>
+            </div>
+            <span>${user.referenceName ? "Reference: " + user.referenceName : "No reference provided"}</span>
+          </div>
+          <div class="approval-meta">
+            ${uploadBadge("References", user.referenceUploaded)}
+            ${uploadBadge("Valid ID", user.idUploaded)}
+            ${uploadBadge("Utility bill", user.billUploaded)}
+          </div>
+          <div class="approval-actions">
+            <select id="role-${user.id}">
+              <option value="REGULAR_MEMBER">Approve as Regular Member</option>
+              <option value="MEMBER">Approve as Verified Member</option>
+            </select>
+            <button class="btn btn-primary" onclick="approveUser(${user.id})">Approve</button>
+            <button class="btn btn-outline" onclick="rejectUser(${user.id})">Reject</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function approveUser(id) {
+      const role = document.getElementById(`role-${id}`).value;
+      try {
+        await window.Tit4TatAPI.approveUser(id, role);
+      } catch (err) {
+        showToast("Could not approve this user.");
+        return;
+      }
+      showToast("Member approved.");
+      renderPending();
+      renderOverview();
+    }
+
+    async function rejectUser(id) {
+      const reason = window.prompt("Reason for rejecting this registration (optional):") || "";
+      try {
+        await window.Tit4TatAPI.rejectUser(id, reason);
+      } catch (err) {
+        showToast("Could not reject this user.");
+        return;
+      }
+      showToast("Registration rejected.");
+      renderPending();
+      renderOverview();
+    }
+
+    async function renderCallLog() {
+      const tbody = document.getElementById("callLogTable");
+      let logs;
+      try {
+        logs = await window.Tit4TatAPI.getEmergencyLogs();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4">Could not load the call log.</td></tr>`;
+        return;
+      }
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">No emergency calls logged yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logs.map(log => `
+        <tr>
+          <td>${log.callerName}</td>
+          <td>${log.targetLabel}</td>
+          <td>${log.targetType}</td>
+          <td>${new Date(log.createdAt).toLocaleString()}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function renderAnnouncementsAdmin() {
+      const el = document.getElementById("announcementsList");
+      let announcements;
+      try {
+        announcements = await window.Tit4TatAPI.getAnnouncements();
+      } catch (err) {
+        el.innerHTML = `<div class="empty-note">Could not load announcements.</div>`;
+        return;
+      }
+
+      if (announcements.length === 0) {
+        el.innerHTML = `<div class="empty-note">No announcements posted yet.</div>`;
+        return;
+      }
+
+      el.innerHTML = announcements.map(a => `
+        <div class="announcement-item">
+          <div>
+            <h4>${a.title}</h4>
+            <p>${a.body}</p>
+            <small>${a.authorName} · ${new Date(a.createdAt).toLocaleString()}</small>
+          </div>
+          <button class="btn btn-outline" onclick="deleteAnnouncement(${a.id})">Remove</button>
+        </div>
+      `).join("");
+    }
+
+    async function postAnnouncement() {
+      const title = document.getElementById("announcementTitle").value.trim();
+      const body = document.getElementById("announcementBody").value.trim();
+
+      if (!title || !body) {
+        showToast("Please fill in a title and message.");
+        return;
+      }
+
+      try {
+        await window.Tit4TatAPI.createAnnouncement({ title, body });
+      } catch (err) {
+        showToast("Could not post the announcement.");
+        return;
+      }
+
+      document.getElementById("announcementTitle").value = "";
+      document.getElementById("announcementBody").value = "";
+      renderAnnouncementsAdmin();
+      showToast("Announcement posted.");
+    }
+
+    async function deleteAnnouncement(id) {
+      try {
+        await window.Tit4TatAPI.deleteAnnouncement(id);
+      } catch (err) {
+        showToast("Could not remove the announcement.");
+        return;
+      }
+      renderAnnouncementsAdmin();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      const currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+      if (!window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+        window.location.href = "secta.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "dashboard", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      renderOverview();
+      renderPending();
+      renderAnnouncementsAdmin();
+      renderCallLog();
+    })();
+  </script>
+</body>
+</html>

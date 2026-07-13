@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Member Profile</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only this page's specific rules are defined here. */
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+
+    .profile-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.7fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .profile-photo-card {
+      text-align: center;
+      padding: 32px 20px;
+    }
+
+    .profile-photo {
+      width: 140px;
+      height: 140px;
+      border-radius: 40px;
+      margin: 0 auto 18px;
+      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      font-size: 2.6rem;
+    }
+
+    .profile-photo-card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+
+    .profile-photo-card > p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+    }
+
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge.verified   { color: #166534; background: #dcfce7; }
+    .badge.specialty  { color: var(--primary); background: var(--primary-light); }
+    .badge.business   { color: #92400e; background: #fef3c7; }
+    .badge.essential  { color: #991b1b; background: #fee2e2; }
+
+    .contact-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .about-text {
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 0.94rem;
+    }
+
+    .review-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .review {
+      border-left: 3px solid var(--accent);
+      padding-left: 12px;
+    }
+
+    .review span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+
+    .empty-note {
+      padding: 30px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .profile-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Directory Status</strong>
+        <p>All listed members are verified before being approved into Tit4Tat.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Member Profile</h2>
+            <p>Full profile details for this community member.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Member</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <a class="back-link" onclick="window.location.href='sectc.html'">&larr; Back to Directory</a>
+
+      <div id="profileContent"></div>
+    </main>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let member = null;
+
+    function render() {
+      const content = document.getElementById("profileContent");
+
+      if (!member) {
+        content.innerHTML = `<div class="empty-note">This member could not be found.</div>`;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="profile-layout">
+          <section class="section-card">
+            <div class="section-header">
+              <div>
+                <h3>About</h3>
+                <p>${member.category || "Community Member"}</p>
+              </div>
+            </div>
+
+            <p class="about-text">${member.businessDescription || member.bio || "No bio provided yet."}</p>
+
+            <div class="detail-list" style="margin-top: 18px;">
+              <div class="detail-row">
+                <div class="detail-icon">📍</div>
+                <div>
+                  <strong>Address</strong>
+                  <span>${member.location || "Not provided"}</span>
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="detail-icon">📌</div>
+                <div>
+                  <strong>Specialty</strong>
+                  <span>${member.specialty || "Not provided"}</span>
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="detail-icon">🕘</div>
+                <div>
+                  <strong>Availability</strong>
+                  <span>${member.availability || "Not provided"}</span>
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="detail-icon">🟢</div>
+                <div>
+                  <strong>Status</strong>
+                  <span>${member.status}</span>
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <div class="detail-icon">✅</div>
+                <div>
+                  <strong>Verification</strong>
+                  <span>ID, reference, and utility bill verified by admin.</span>
+                </div>
+              </div>
+
+              ${member.essentialWorker ? `
+                <div class="detail-row">
+                  <div class="detail-icon">🚑</div>
+                  <div>
+                    <strong>Essential Worker</strong>
+                    <span>${member.essentialWorkerType || "Not specified"}${member.essentialWorkerRegistrationNumber ? ` · Reg# ${member.essentialWorkerRegistrationNumber}` : ""}</span>
+                  </div>
+                </div>
+              ` : ""}
+            </div>
+
+            <div style="margin-top: 22px;">
+              <h3 style="font-size: 1rem;">Community Notes</h3>
+              <div class="review-list" id="reviewList"></div>
+            </div>
+          </section>
+
+          <aside class="section-card profile-photo-card">
+            <div class="profile-photo">${member.avatarUrl
+              ? `<img src="${member.avatarUrl}" alt="${member.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`
+              : member.initials}</div>
+            <h2>${member.name}</h2>
+            <p>${member.category || "Community Member"}</p>
+
+            <div class="badge-row">
+              <span class="badge verified">✅ Verified Member</span>
+              ${member.specialty ? `<span class="badge specialty">${member.specialty}</span>` : ""}
+              ${member.business ? `<span class="badge business">🏪 ${member.businessName || "Local Business"}</span>` : ""}
+              ${member.essentialWorker ? `<span class="badge essential">🚑 Essential Worker</span>` : ""}
+            </div>
+
+            <div class="contact-actions">
+              <button class="btn btn-primary" onclick="messageThisMember()">💬 Message</button>
+              <button class="btn btn-success" onclick="callThisMember()">📞 Call</button>
+            </div>
+          </aside>
+        </div>
+      `;
+
+      const reviewList = document.getElementById("reviewList");
+      if (member.notes && member.notes.length) {
+        reviewList.innerHTML = member.notes.map(note => `
+          <div class="review">
+            <strong>Community Note</strong>
+            <span>${note}</span>
+          </div>
+        `).join("");
+      } else {
+        reviewList.innerHTML = `<span style="color: var(--muted); font-size: 0.86rem;">No community notes yet.</span>`;
+      }
+    }
+
+    function messageThisMember() {
+      if (!member) return;
+      window.location.href = `sectmessages.html?contact=${member.id}`;
+    }
+
+    function callThisMember() {
+      if (!member) return;
+      window.location.href = `sectd.html?callContact=${member.id}`;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "directory", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      const params = new URLSearchParams(window.location.search);
+      const memberId = params.get("id");
+
+      if (memberId) {
+        try {
+          member = await window.Tit4TatAPI.getMember(memberId);
+        } catch (err) {
+          member = null;
+        }
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

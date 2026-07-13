@@ -1,0 +1,865 @@
+/* ================================================================
+   Tit4Tat Community Portal — Shared Stylesheet
+   Included by: sects.html, secta.html, sectb.html, sectc.html, sectd.html,
+   sectmessages.html, sectmemberprofile.html, sectbusiness.html, sectadmin.html,
+   sectsettings.html
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,700;0,800;0,900;1,400&display=swap');
+
+/* ----------------------------------------------------------------
+   Design Tokens
+   ---------------------------------------------------------------- */
+:root {
+  --primary:       #4b168f;
+  --primary-dark:  #2d0b5f;
+  --primary-light: #efe7ff;
+  --accent:        #7c3aed;
+  --success:       #16a34a;
+  --warning:       #f59e0b;
+  --danger:        #dc2626;
+  --info:          #2563eb;
+  --bg:            #f5f3fb;
+  --card:          #ffffff;
+  --text:          #1f1235;
+  --muted:         #6b6478;
+  --border:        #e6def2;
+  --shadow:        0 8px 24px rgba(46, 16, 101, 0.08);
+  --shadow-lg:     0 20px 50px rgba(46, 16, 101, 0.14);
+  --radius:        18px;
+  --sidebar-w:     260px;
+  --topbar-top:    16px;
+}
+
+/* ----------------------------------------------------------------
+   Reset & Base
+   ---------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; border: none; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* ----------------------------------------------------------------
+   App Shell
+   ---------------------------------------------------------------- */
+.app-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+}
+
+/* ----------------------------------------------------------------
+   Sidebar
+   ---------------------------------------------------------------- */
+.sidebar {
+  background: linear-gradient(180deg,
+    var(--primary-dark)  0%,
+    #361075             50%,
+    var(--primary)      100%
+  );
+  color: #fff;
+  padding: 24px 16px 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar::-webkit-scrollbar { display: none; }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 28px;
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 1.05rem;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  overflow: hidden;
+}
+
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+}
+
+.brand-text h1 {
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.3px;
+}
+
+.brand-text p {
+  font-size: 0.74rem;
+  opacity: 0.72;
+  margin-top: 2px;
+}
+
+/* Nav links (rendered by localDatabase.js as <a> elements) */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.93rem;
+  font-weight: 700;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  border-left: 3px solid transparent;
+}
+
+.nav a:hover {
+  background: rgba(255, 255, 255, 0.11);
+  color: #fff;
+}
+
+.nav a.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-left-color: rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* Sidebar footer info card */
+.sidebar-footer {
+  flex-shrink: 0;
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.sidebar-footer strong {
+  display: block;
+  font-size: 0.86rem;
+  margin-bottom: 5px;
+  opacity: 0.95;
+}
+
+/* Sign-out row in sidebar */
+.sidebar-signout {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+.sidebar-signout a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 12px;
+  transition: color 0.18s, background 0.18s;
+}
+
+.sidebar-signout a:hover {
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.22);
+}
+
+/* ----------------------------------------------------------------
+   Mobile sidebar overlay (hidden by default, shown when .sidebar-open)
+   ---------------------------------------------------------------- */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 5, 35, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 199;
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------------
+   Main Area
+   ---------------------------------------------------------------- */
+.main {
+  min-width: 0;
+  padding: 22px 24px 40px;
+  overflow: hidden;
+}
+
+/* ----------------------------------------------------------------
+   Topbar
+   ---------------------------------------------------------------- */
+.topbar {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+  position: sticky;
+  top: var(--topbar-top);
+  z-index: 10;
+}
+
+.page-title h2 {
+  font-size: 1.38rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+  margin-bottom: 2px;
+}
+
+.page-title p {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Notification bell */
+.notification {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  position: relative;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.18s;
+  border: none;
+}
+
+.notification:hover { background: #e2d5ff; }
+
+.notification span {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--danger);
+  color: #fff;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  font-weight: 900;
+  border: 2px solid var(--bg);
+  line-height: 1;
+}
+
+/* User pill */
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #faf8ff;
+  border: 1px solid var(--border);
+  padding: 6px 12px 6px 6px;
+  border-radius: 999px;
+  cursor: default;
+  transition: background 0.18s;
+  max-width: 200px;
+}
+
+.user-pill:hover { background: var(--primary-light); }
+
+/* Avatar (initials) */
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f4c38b, #8b5cf6);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.user-pill strong {
+  display: block;
+  font-size: 0.84rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-pill small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+/* Mobile hamburger */
+.mobile-menu-btn {
+  display: none;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 9px 11px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  transition: background 0.18s;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-menu-btn:hover { background: #e2d5ff; }
+
+/* ----------------------------------------------------------------
+   Shared Cards & Headings
+   ---------------------------------------------------------------- */
+.section-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.section-header h3 {
+  font-size: 1.08rem;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+}
+
+.section-header p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* ----------------------------------------------------------------
+   Buttons
+   ---------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  transition: all 0.18s ease;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 6px 18px rgba(75, 22, 143, 0.32);
+  transform: translateY(-1px);
+}
+
+.btn-light {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+.btn-light:hover {
+  background: #e2d5ff;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid currentColor;
+}
+.btn-outline:hover {
+  background: var(--primary-light);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.32);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+}
+.btn-success:hover {
+  background: #15803d;
+}
+
+.btn-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 1rem;
+}
+
+/* ----------------------------------------------------------------
+   Form Inputs (shared defaults)
+   ---------------------------------------------------------------- */
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  outline: none;
+  color: var(--text);
+  background: #fff;
+  font-size: 0.94rem;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+textarea { resize: vertical; }
+
+/* ----------------------------------------------------------------
+   Detail Row (shared across pages)
+   ---------------------------------------------------------------- */
+.detail-list {
+  display: grid;
+  gap: 13px;
+  margin-bottom: 18px;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.detail-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.detail-row strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.detail-row span {
+  color: var(--muted);
+  font-size: 0.87rem;
+  line-height: 1.45;
+}
+
+/* ----------------------------------------------------------------
+   Horizontal scroll carousel (dashboard "Activity"/"Members" preview
+   rows on mobile — see .mobile-only-carousel below)
+   ---------------------------------------------------------------- */
+.h-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+  min-width: 0;
+}
+.h-scroll::-webkit-scrollbar { display: none; }
+.h-scroll > * { scroll-snap-align: start; flex-shrink: 0; }
+
+/* Content that should only appear on the phone-style mobile layout
+   (e.g. dashboard preview carousels) — hidden on desktop/tablet. */
+.mobile-only { display: none; }
+
+/* Inverse of .mobile-only — content that's redundant once a mobile-only
+   equivalent takes over (e.g. a desktop hero banner replaced by a carousel). */
+.desktop-only { display: block; }
+
+/* ----------------------------------------------------------------
+   Mobile Action Bar — fixed Message / Report / Call quick actions,
+   rendered by localDatabase.js for Member/Regular Member roles only.
+   ---------------------------------------------------------------- */
+.mobile-action-bar {
+  display: none;
+}
+
+/* ----------------------------------------------------------------
+   Toast
+   ---------------------------------------------------------------- */
+.toast {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  background: #14082f;
+  color: #fff;
+  padding: 13px 18px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  display: none;
+  z-index: 9999;
+  max-width: 320px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.toast.show {
+  display: block;
+  animation: t4t-toast-in 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes t4t-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ----------------------------------------------------------------
+   Emergency Alert Banners (community-wide, closable)
+   ---------------------------------------------------------------- */
+.t4t-emergency-banners {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+}
+
+.t4t-emergency-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--danger);
+  color: #fff;
+  padding: 14px 14px 14px 16px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  animation: t4t-toast-in 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.t4t-emergency-banner-icon {
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.t4t-emergency-banner-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.t4t-emergency-banner-message {
+  font-weight: 700;
+}
+
+.t4t-emergency-banner-location {
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.t4t-emergency-banner-close {
+  flex: none;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.t4t-emergency-banner-close:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* ----------------------------------------------------------------
+   Responsive — Mobile Sidebar
+   ---------------------------------------------------------------- */
+
+/* Two-column→four-column stats helper (used on multiple pages) */
+@media (max-width: 1100px) {
+  .stats-grid,
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  /* Collapse sidebar to hidden (slides in on toggle) */
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    height: 100vh; /* fallback */
+    width: var(--sidebar-w);
+    transform: translateX(-110%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200;
+  }
+
+  .sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .sidebar-open .sidebar-overlay {
+    display: block;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  :root {
+    --topbar-top: 10px;
+  }
+
+  /* Branded purple header on phones, matching the app's own sidebar/brand
+     colors instead of the desktop's neutral frosted-glass topbar. */
+  .topbar {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    border-color: transparent;
+    box-shadow: 0 10px 24px rgba(45, 11, 95, 0.28);
+  }
+
+  .topbar .page-title h2,
+  .topbar .user-pill strong {
+    color: #fff;
+  }
+
+  .topbar .page-title p,
+  .topbar .user-pill small {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .topbar .mobile-menu-btn {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+  }
+  .topbar .mobile-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.26);
+  }
+
+  .topbar .notification {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+  }
+  .topbar .notification:hover {
+    background: rgba(255, 255, 255, 0.26);
+  }
+
+  .topbar .user-pill {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+  .topbar .user-pill:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .mobile-only { display: block; }
+  .desktop-only { display: none; }
+
+  /* Fixed bottom quick-action bar (Message / Report / Call) */
+  .mobile-action-bar.has-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 60;
+    background: #fff;
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: 0 16px 40px rgba(20, 8, 47, 0.22);
+  }
+
+  .mobile-action-bar a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 6px;
+    border-radius: 14px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--primary);
+    background: var(--primary-light);
+    transition: transform 0.15s ease;
+  }
+
+  .mobile-action-bar a:active {
+    transform: scale(0.96);
+  }
+
+  .mobile-action-bar a .mab-icon {
+    font-size: 1.2rem;
+  }
+
+  .mobile-action-bar a.mab-emergency {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  /* Reserve room so page content and the toast never sit under the bar */
+  body.has-mobile-actions .main {
+    padding-bottom: 130px;
+  }
+
+  body.has-mobile-actions .toast {
+    bottom: 100px;
+  }
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 12px 14px 32px;
+  }
+
+  .topbar {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+    top: 6px;
+  }
+
+  .top-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .section-card {
+    padding: 16px;
+  }
+
+  /* Collapse two-column grid to single */
+  .stats-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Hide name/role on very small screens, keep avatar visible */
+  .user-pill strong,
+  .user-pill small {
+    display: none;
+  }
+
+  .user-pill {
+    padding-right: 7px;
+  }
+}

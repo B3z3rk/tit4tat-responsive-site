@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Settings</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only settings-page-specific rules are defined here. */
+
+    .filters {
+      margin-bottom: 18px;
+    }
+
+    .user-row {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fff;
+      display: grid;
+      gap: 12px;
+    }
+
+    .user-row + .user-row {
+      margin-top: 12px;
+    }
+
+    .user-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .user-row-top h4 {
+      font-size: 1rem;
+      margin-bottom: 3px;
+    }
+
+    .user-row-top span {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .badge-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge.role-admin  { color: #4b168f; background: #efe7ff; }
+    .badge.role-member { color: #166534; background: #dcfce7; }
+    .badge.role-regular_member { color: #92400e; background: #fef3c7; }
+
+    .badge.status-approved  { color: #166534; background: #dcfce7; }
+    .badge.status-pending   { color: #92400e; background: #fef3c7; }
+    .badge.status-rejected  { color: #991b1b; background: #fee2e2; }
+    .badge.status-suspended { color: #991b1b; background: #fee2e2; }
+
+    .user-row-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .user-row-actions select {
+      width: auto;
+    }
+
+    .empty-note {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Account Management</strong>
+        <p>Change roles, reset passwords, and suspend or reactivate accounts.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Settings</h2>
+            <p>Manage member accounts: roles, password resets, and suspensions.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Admin User</strong>
+              <small id="userRole">Admin</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="section-card">
+        <div class="section-header">
+          <div>
+            <h3>All Accounts</h3>
+            <p>Every registered account, regardless of status.</p>
+          </div>
+        </div>
+
+        <div class="filters">
+          <input id="userSearch" type="text" placeholder="Search by name or email..." oninput="renderUsers()" />
+        </div>
+
+        <div id="userList"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let allUsers = [];
+    let currentUser = null;
+
+    async function loadUsers() {
+      try {
+        allUsers = await window.Tit4TatAPI.getAdminUsers();
+      } catch (err) {
+        document.getElementById("userList").innerHTML = `<div class="empty-note">Could not load accounts.</div>`;
+        return;
+      }
+      renderUsers();
+    }
+
+    function renderUsers() {
+      const el = document.getElementById("userList");
+      const search = document.getElementById("userSearch").value.trim().toLowerCase();
+
+      const filtered = allUsers.filter(u =>
+        u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)
+      );
+
+      if (filtered.length === 0) {
+        el.innerHTML = `<div class="empty-note">No matching accounts.</div>`;
+        return;
+      }
+
+      el.innerHTML = filtered.map(u => `
+        <div class="user-row">
+          <div class="user-row-top">
+            <div>
+              <h4>${u.name}${u.id === currentUser.id ? " (you)" : ""}</h4>
+              <span>${u.email}</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge role-${u.role.toLowerCase()}">${u.role.replace("_", " ")}</span>
+              <span class="badge status-${u.approvalStatus}">${u.approvalStatus}</span>
+            </div>
+          </div>
+          <div class="user-row-actions">
+            <select id="role-${u.id}">
+              <option value="REGULAR_MEMBER" ${u.role === "REGULAR_MEMBER" ? "selected" : ""}>Regular Member</option>
+              <option value="MEMBER" ${u.role === "MEMBER" ? "selected" : ""}>Verified Member</option>
+              <option value="ADMIN" ${u.role === "ADMIN" ? "selected" : ""}>Admin</option>
+            </select>
+            <button class="btn btn-light" onclick="changeRole(${u.id})">Change Role</button>
+            <button class="btn btn-outline" onclick="resetPassword(${u.id})">Reset Password</button>
+            ${u.approvalStatus === "suspended"
+              ? `<button class="btn btn-primary" onclick="reactivate(${u.id})">Reactivate</button>`
+              : `<button class="btn btn-danger" onclick="suspend(${u.id})" ${u.id === currentUser.id ? "disabled" : ""}>Suspend</button>`}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function changeRole(id) {
+      const role = document.getElementById(`role-${id}`).value;
+      try {
+        await window.Tit4TatAPI.changeUserRole(id, role);
+      } catch (err) {
+        showToast("Could not change role.");
+        return;
+      }
+      showToast("Role updated.");
+      await loadUsers();
+    }
+
+    async function resetPassword(id) {
+      const newPassword = window.prompt(
+        "Enter a new password for this user, or leave blank to auto-generate one:"
+      );
+      if (newPassword === null) {
+        return; // cancelled
+      }
+
+      let result;
+      try {
+        result = await window.Tit4TatAPI.resetUserPassword(id, newPassword.trim() || null);
+      } catch (err) {
+        showToast("Could not reset password.");
+        return;
+      }
+
+      if (result.temporaryPassword) {
+        window.alert(`Temporary password for this user: ${result.temporaryPassword}\n\nShare it with them securely — it won't be shown again.`);
+      } else {
+        showToast("Password updated.");
+      }
+    }
+
+    async function suspend(id) {
+      if (!window.confirm("Suspend this account? They will be signed out and unable to log in until reactivated.")) {
+        return;
+      }
+      try {
+        await window.Tit4TatAPI.suspendUser(id);
+      } catch (err) {
+        showToast("Could not suspend this account.");
+        return;
+      }
+      showToast("Account suspended.");
+      await loadUsers();
+    }
+
+    async function reactivate(id) {
+      try {
+        await window.Tit4TatAPI.reactivateUser(id);
+      } catch (err) {
+        showToast("Could not reactivate this account.");
+        return;
+      }
+      showToast("Account reactivated.");
+      await loadUsers();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+      if (!window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+        window.location.href = "secta.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "settings", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      await loadUsers();
+    })();
+  </script>
+</body>
+</html>

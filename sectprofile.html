@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | My Profile</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only this page's specific rules are defined here. */
+
+    .profile-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .photo-card {
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .photo-frame {
+      width: 140px;
+      height: 140px;
+      border-radius: 40px;
+      margin: 0 auto 18px;
+      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      font-size: 2.6rem;
+      overflow: hidden;
+    }
+
+    .photo-card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 4px;
+    }
+
+    .photo-card p {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-bottom: 18px;
+    }
+
+    .photo-actions input[type="file"] {
+      margin-bottom: 12px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 800;
+      font-size: 0.88rem;
+      margin-bottom: 6px;
+    }
+
+    .field p.hint {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .readonly-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      background: #fbf8ff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .readonly-row div strong {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .readonly-row div span {
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .profile-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .field-row,
+      .readonly-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Your Account</strong>
+        <p>Update your photo, profile details, and password here.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>My Profile</h2>
+            <p>Manage your photo, profile details, and password.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Member</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="profile-layout">
+        <!-- Photo -->
+        <section class="section-card photo-card">
+          <div class="photo-frame" id="photoFrame">U</div>
+          <h3 id="photoName">Your Name</h3>
+          <p id="photoRole">Verified Member</p>
+
+          <div class="photo-actions">
+            <input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" />
+            <div>
+              <button class="btn btn-primary" style="width: 100%;" onclick="uploadAvatar()">Upload Photo</button>
+            </div>
+            <p class="hint">JPEG, PNG, GIF, or WEBP. Max 5MB.</p>
+          </div>
+        </section>
+
+        <div>
+          <!-- Profile details -->
+          <section class="section-card" style="margin-bottom: 20px;">
+            <div class="section-header">
+              <div>
+                <h3>Profile Details</h3>
+                <p>Shown to other members in the Community Directory.</p>
+              </div>
+            </div>
+
+            <div class="readonly-row">
+              <div>
+                <strong>Name</strong>
+                <span id="readonlyName">—</span>
+              </div>
+              <div>
+                <strong>Email</strong>
+                <span id="readonlyEmail">—</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="bioInput">Bio</label>
+              <textarea id="bioInput" rows="3" placeholder="Tell the community a bit about yourself"></textarea>
+            </div>
+
+            <div class="field">
+              <label for="locationInput">Address / Area</label>
+              <input id="locationInput" type="text" placeholder="e.g. Market Lane" />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="specialtyInput">Specialty</label>
+                <input id="specialtyInput" type="text" placeholder="e.g. Community coordination" />
+              </div>
+
+              <div class="field">
+                <label for="availabilityInput">Availability</label>
+                <input id="availabilityInput" type="text" placeholder="e.g. Weekday evenings" />
+              </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveProfileFields()">Save Profile</button>
+          </section>
+
+          <!-- Password -->
+          <section class="section-card">
+            <div class="section-header">
+              <div>
+                <h3>Change Password</h3>
+                <p>You'll be signed out everywhere and need to sign in again afterward.</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="currentPassword">Current Password</label>
+              <input id="currentPassword" type="password" placeholder="Current password" />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="newPassword">New Password</label>
+                <input id="newPassword" type="password" placeholder="At least 6 characters" />
+              </div>
+
+              <div class="field">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input id="confirmPassword" type="password" placeholder="Repeat new password" />
+              </div>
+            </div>
+
+            <button class="btn btn-danger" onclick="changePassword()">Change Password</button>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let myProfile = null;
+
+    function renderPhoto() {
+      window.Tit4TatDB.renderAvatar("photoFrame", myProfile);
+      document.getElementById("photoName").textContent = currentUser.name;
+      document.getElementById("photoRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+    }
+
+    async function loadProfile() {
+      try {
+        myProfile = await window.Tit4TatAPI.getMyProfile();
+      } catch (err) {
+        showToast("Could not load your profile.");
+        return;
+      }
+
+      document.getElementById("readonlyName").textContent = currentUser.name;
+      document.getElementById("readonlyEmail").textContent = currentUser.email;
+      document.getElementById("bioInput").value = myProfile.bio || "";
+      document.getElementById("locationInput").value = myProfile.location || "";
+      document.getElementById("specialtyInput").value = myProfile.specialty || "";
+      document.getElementById("availabilityInput").value = myProfile.availability || "";
+
+      renderPhoto();
+    }
+
+    async function uploadAvatar() {
+      const input = document.getElementById("avatarFile");
+      const file = input.files && input.files[0];
+
+      if (!file) {
+        showToast("Choose a photo first.");
+        return;
+      }
+
+      let updated;
+      try {
+        updated = await window.Tit4TatAPI.uploadMyAvatar(file);
+      } catch (err) {
+        showToast(err.message || "Could not upload photo.");
+        return;
+      }
+
+      myProfile = updated;
+      currentUser.avatarUrl = updated.avatarUrl;
+      input.value = "";
+
+      renderPhoto();
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      showToast("Photo updated.");
+    }
+
+    async function saveProfileFields() {
+      const payload = {
+        bio: document.getElementById("bioInput").value.trim() || null,
+        location: document.getElementById("locationInput").value.trim() || null,
+        specialty: document.getElementById("specialtyInput").value.trim() || null,
+        availability: document.getElementById("availabilityInput").value.trim() || null
+      };
+
+      try {
+        myProfile = await window.Tit4TatAPI.updateMyProfileFields(payload);
+      } catch (err) {
+        showToast("Could not save profile.");
+        return;
+      }
+
+      showToast("Profile updated.");
+    }
+
+    async function changePassword() {
+      const current = document.getElementById("currentPassword").value;
+      const next = document.getElementById("newPassword").value;
+      const confirm = document.getElementById("confirmPassword").value;
+
+      if (!current || !next) {
+        showToast("Fill in your current and new password.");
+        return;
+      }
+      if (next.length < 6) {
+        showToast("New password must be at least 6 characters.");
+        return;
+      }
+      if (next !== confirm) {
+        showToast("New password and confirmation don't match.");
+        return;
+      }
+
+      try {
+        await window.Tit4TatAPI.changePassword(current, next);
+      } catch (err) {
+        showToast(err.message || "Could not change password.");
+        return;
+      }
+
+      window.alert("Password changed. Please sign in again with your new password.");
+      window.location.href = "sects.html";
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+      if (currentUser.role === "ADMIN") {
+        window.location.href = "sectadmin.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "profile", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      await loadProfile();
+    })();
+  </script>
+</body>
+</html>

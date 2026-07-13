@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Community Activities</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* ---- ACTIVITIES PAGE STYLES ---- */
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    /* Grid items default to min-width:auto, which lets a wide child (like
+       the horizontal-scroll carousels below) force the whole column wider
+       than the viewport instead of scrolling within its own bounds. */
+    .content-grid > div {
+      min-width: 0;
+    }
+
+    /* MY ACTIVITY (member / regular member dashboard analytics) */
+
+    .my-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .stat-card small { color: var(--muted); font-weight: 800; }
+    .stat-card h3 { font-size: 1.7rem; margin: 8px 0 6px; }
+    .stat-card p { color: var(--muted); font-size: 0.82rem; }
+
+    .business-callout {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 22px;
+    }
+
+    .business-callout h4 { font-size: 1rem; margin-bottom: 4px; }
+    .business-callout p { color: rgba(255, 255, 255, 0.82); font-size: 0.86rem; }
+
+    @media (max-width: 900px) {
+      .my-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .my-stats-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Phone-style dashboard preview carousels (Activity / Members) —
+       only shown via .mobile-only, see shared.css */
+    .mobile-welcome p { color: var(--muted); font-size: 0.9rem; }
+    .mobile-welcome h2 { font-size: 1.3rem; font-weight: 900; }
+
+    .mobile-carousel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .mobile-carousel-header h3 { font-size: 1rem; }
+
+    .mobile-carousel-header button {
+      background: transparent;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0;
+    }
+
+    .mobile-activity-card {
+      width: 150px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .mobile-activity-card .thumb {
+      height: 80px;
+      background-size: cover;
+      background-position: center;
+      background-color: var(--primary-light);
+    }
+
+    .mobile-activity-card .info { padding: 10px; }
+    .mobile-activity-card h4 { font-size: 0.84rem; margin-bottom: 3px; line-height: 1.25; }
+    .mobile-activity-card p { color: var(--muted); font-size: 0.72rem; }
+
+    .mobile-member-card {
+      width: 74px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .mobile-member-card .avatar-circle {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      margin: 0 auto 6px;
+      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 0.9rem;
+      overflow: hidden;
+    }
+
+    .mobile-member-card span {
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .section-header button {
+      background: transparent;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 0;
+    }
+
+    /* .btn-* buttons (e.g. the admin "+ New Activity" action) keep their real
+       button styling even inside a .section-header, overriding the link-like
+       default above. */
+    .section-header .btn {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 10px 16px;
+      border-radius: 12px;
+    }
+
+    .section-header .btn.btn-outline {
+      background: transparent;
+      color: var(--primary);
+    }
+
+    #announcementsList .announcement-item {
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      background: var(--primary-light);
+      border-radius: 0 12px 12px 0;
+    }
+
+    #announcementsList .announcement-item:last-child { margin-bottom: 0; }
+    #announcementsList h4 { font-size: 0.95rem; margin-bottom: 3px; }
+    #announcementsList p { color: var(--text); font-size: 0.87rem; line-height: 1.4; }
+    #announcementsList small { color: var(--muted); }
+
+    #newActivityModal label {
+      display: block;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    #newActivityModal input,
+    #newActivityModal textarea {
+      margin-top: 0;
+    }
+
+    /* Featured Activity Banner */
+    .featured-activity {
+      min-height: 260px;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(31, 18, 53, 0.06), rgba(31, 18, 53, 0.84)),
+        url("https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1200&q=80");
+      background-color: var(--primary-dark);
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
+      padding: 22px;
+      color: #fff;
+    }
+
+    .tag {
+      display: inline-flex;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      font-size: 0.76rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      backdrop-filter: blur(6px);
+    }
+
+    .featured-activity h3 {
+      font-size: 1.55rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .activity-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.86rem;
+      color: rgba(255, 255, 255, 0.88);
+      margin-bottom: 18px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Activity List */
+    .activity-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .activity-item {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+    }
+
+    .activity-item:hover,
+    .activity-item.active {
+      border-color: var(--accent);
+      box-shadow: 0 6px 18px rgba(124, 58, 237, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .activity-thumb {
+      height: 80px;
+      border-radius: 12px;
+      background-color: var(--primary-light);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .activity-info h4 { margin-bottom: 5px; font-size: 0.97rem; }
+    .activity-info p  { color: var(--muted); font-size: 0.84rem; line-height: 1.4; }
+
+    .status {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status.going { color: #166534; background: #dcfce7; }
+    .status.open  { color: var(--primary); background: var(--primary-light); }
+
+    /* Right Detail Panel */
+    .details-image {
+      height: 180px;
+      border-radius: 16px;
+      background-size: cover;
+      background-position: center;
+      margin-bottom: 16px;
+    }
+
+    .details-title { margin-bottom: 10px; }
+    .details-title h3 { font-size: 1.25rem; font-weight: 900; margin-bottom: 6px; }
+    .details-title p  { color: var(--muted); line-height: 1.5; font-size: 0.9rem; }
+
+    .details-list { display: grid; gap: 12px; margin: 16px 0; }
+
+    /* Overlapping mini-avatars */
+    .participants { display: flex; align-items: center; margin: 14px 0 20px; }
+
+    .mini-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      margin-left: -8px;
+      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 0.74rem;
+    }
+
+    .mini-avatar:first-child { margin-left: 0; }
+
+    .participant-count {
+      margin-left: 9px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    /* Reminder card */
+    .reminder-card {
+      margin-top: 18px;
+      background: #14082f;
+      color: #fff;
+      border-radius: 18px;
+      padding: 16px 18px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .reminder-card small  { opacity: 0.7; font-size: 0.76rem; }
+    .reminder-card strong { font-size: 0.96rem; }
+    .reminder-card p      { color: rgba(255,255,255,0.72); font-size: 0.84rem; }
+
+    /* My Activities */
+    .my-activities { margin-top: 22px; }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .mini-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.18s;
+    }
+
+    .mini-card:hover  { box-shadow: var(--shadow-lg); }
+    .mini-card small  { color: var(--muted); font-size: 0.78rem; }
+    .mini-card h4     { margin: 7px 0 4px; font-size: 0.96rem; }
+
+    .empty-state {
+      display: none;
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      font-size: 0.9rem;
+    }
+
+    /* Page-level responsive */
+    @media (max-width: 1100px) {
+      .mini-grid    { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .activity-item { grid-template-columns: 86px 1fr; }
+      .activity-item .status { grid-column: 2; width: fit-content; }
+      .featured-activity { min-height: 300px; }
+      .mini-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ---- ACTIVITY DETAILS MODAL ---- */
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 5, 35, 0.58);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 500;
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .activity-modal {
+      width: min(620px, 100%);
+      max-height: 90dvh;
+      max-height: 90vh;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(15, 5, 35, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: modal-enter 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes modal-enter {
+      from { transform: translateY(24px) scale(0.96); }
+      to   { transform: translateY(0)     scale(1); }
+    }
+
+    .modal-hero {
+      position: relative;
+      height: 220px;
+      background-color: var(--primary-dark);
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+
+    .modal-hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(15,5,35,0.7) 0%, transparent 55%);
+    }
+
+    .modal-hero-tag {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      z-index: 2;
+      display: inline-flex;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 0.74rem;
+      font-weight: 800;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 1rem;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      border: none;
+      transition: background 0.18s;
+    }
+
+    .modal-close:hover { background: rgba(255,255,255,0.35); }
+
+    .modal-hero-title {
+      position: absolute;
+      bottom: 14px;
+      left: 16px;
+      right: 16px;
+      z-index: 2;
+      color: #fff;
+    }
+
+    .modal-hero-title h2 {
+      font-size: 1.45rem;
+      font-weight: 900;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .modal-hero-title p {
+      font-size: 0.84rem;
+      opacity: 0.85;
+    }
+
+    .modal-body {
+      padding: 22px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-details-list {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .modal-participants {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .modal-reminder {
+      margin-top: 16px;
+      background: #14082f;
+      color: #fff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .modal-reminder small  { opacity: 0.7; font-size: 0.74rem; }
+    .modal-reminder strong { font-size: 0.92rem; }
+    .modal-reminder p      { color: rgba(255,255,255,0.7); font-size: 0.82rem; }
+
+    @media (max-width: 480px) {
+      .activity-modal { border-radius: 20px 20px 0 0; }
+      .modal-backdrop { padding: 0; align-items: flex-end; }
+      .modal-actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Community Status</strong>
+        <p>All systems active. 4 new activities available this week.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Community Activities</h2>
+            <p>Explore, join, and keep track of what's happening in your community.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button class="notification" aria-label="Notifications: 3 unread">&#128276;<span>3</span></button>
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Alex Johnson</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="content-grid">
+        <!-- Left Content -->
+        <div>
+          <!-- Phone-style dashboard preview (mobile only) -->
+          <section class="mobile-only mobile-welcome" style="margin-bottom: 18px;">
+            <p>Welcome back,</p>
+            <h2 id="mobileWelcomeName">Member</h2>
+          </section>
+
+          <section class="mobile-only" style="margin-bottom: 22px;">
+            <div class="mobile-carousel-header">
+              <h3>Activity</h3>
+              <button onclick="scrollToList()">See All</button>
+            </div>
+            <div class="h-scroll" id="mobileActivityCarousel"></div>
+          </section>
+
+          <section class="mobile-only" style="margin-bottom: 22px;">
+            <div class="mobile-carousel-header">
+              <h3>Members</h3>
+              <button onclick="window.location.href='sectc.html'">See All</button>
+            </div>
+            <div class="h-scroll" id="mobileMembersCarousel"></div>
+          </section>
+
+          <!-- My Activity (hidden for admins, who have their own overview dashboard) -->
+          <section class="my-stats-grid" id="myStatsSection" style="display: none;">
+            <div class="stat-card">
+              <small>Activities Joined</small>
+              <h3 id="statActivitiesJoined">0</h3>
+              <p id="statUpcoming">0 upcoming across the community</p>
+            </div>
+
+            <div class="stat-card">
+              <small>Reports Submitted</small>
+              <h3 id="statReports">0</h3>
+              <p id="statReportsBreakdown">No reports yet</p>
+            </div>
+
+            <div class="stat-card">
+              <small>Unread Messages</small>
+              <h3 id="statUnread">0</h3>
+              <p>Waiting in your inbox</p>
+            </div>
+
+            <div class="stat-card">
+              <small>Member Since</small>
+              <h3 id="statMemberSince">—</h3>
+              <p id="statMemberSinceRole">Community member</p>
+            </div>
+          </section>
+
+          <!-- Verified-member-only business callout -->
+          <div class="business-callout" id="businessCallout" style="display: none;">
+            <div>
+              <h4 id="businessCalloutTitle">List your business</h4>
+              <p id="businessCalloutText">Let other members know what you offer.</p>
+            </div>
+            <button class="btn btn-light" onclick="window.location.href='sectbusiness.html'">Manage Business</button>
+          </div>
+
+          <section class="section-card" id="announcementsSection" style="margin-bottom: 22px;">
+            <div class="section-header">
+              <h3>Community Announcements</h3>
+            </div>
+            <div id="announcementsList"></div>
+          </section>
+
+          <!-- Redundant with the mobile "Activity" carousel above, so it's
+               desktop-only there while staying the primary highlight on wide
+               screens. -->
+          <section class="section-card desktop-only">
+            <div class="section-header">
+              <h3>Featured Activity</h3>
+              <button onclick="scrollToList()">View All</button>
+            </div>
+
+            <div class="featured-activity">
+              <div>
+                <span class="tag">Community Clean-Up</span>
+                <h3>Clean Up Our Streets</h3>
+                <div class="activity-meta">
+                  <span>&#128197; Sat, May 24, 2025</span>
+                  <span>&#128536; 8:00 AM - 11:00 AM</span>
+                  <span>&#128205; Central Park</span>
+                </div>
+
+                <div class="btn-row">
+                  <button class="btn btn-light" onclick="selectActivity(0)">View Details</button>
+                  <button class="btn btn-primary" onclick="selectActivity(0); setTimeout(joinFromModal, 50);">I'm Going</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-card" style="margin-top: 22px;" id="activityListSection">
+            <div class="section-header">
+              <h3>All Activities</h3>
+              <div style="display:flex; gap:8px;">
+                <button id="newActivityBtn" class="btn btn-primary" style="display:none;" onclick="openNewActivityModal()">+ New Activity</button>
+                <button>Filter</button>
+              </div>
+            </div>
+
+            <div class="activity-list" id="activityList"></div>
+          </section>
+
+          <section class="my-activities">
+            <div class="section-header">
+              <h3>My Activities</h3>
+            </div>
+
+            <div class="mini-grid" id="myActivities"></div>
+            <div class="empty-state" id="emptyState">
+              You have not joined any activities yet.
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Details Panel → now a modal (see #activityModal below) -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Activity Details Modal -->
+  <div class="modal-backdrop" id="activityModal" onclick="handleBackdropClick(event)">
+    <div class="activity-modal">
+      <div class="modal-hero" id="modalHero">
+        <span class="modal-hero-tag" id="modalCategory">Community Clean-Up</span>
+        <button class="modal-close" onclick="closeModal()" aria-label="Close">&#10005;</button>
+        <div class="modal-hero-title">
+          <h2 id="modalTitle">Clean Up Our Streets</h2>
+          <p id="modalDescription">Let's work together to keep our community clean, safe, and beautiful.</p>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-details-list">
+          <div class="detail-row">
+            <div class="detail-icon">&#128197;</div>
+            <div><strong>Date</strong><span id="modalDate">Sat, May 24, 2025</span></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">&#128336;</div>
+            <div><strong>Time</strong><span id="modalTime">8:00 AM - 11:00 AM</span></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">&#128205;</div>
+            <div><strong>Location</strong><span id="modalLocation">Central Park</span></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">&#128101;</div>
+            <div><strong>Organised By</strong><span id="modalOrganizer">Tit4Tat Community Team</span></div>
+          </div>
+        </div>
+
+        <strong style="font-size:0.88rem;">Participants</strong>
+        <div class="modal-participants">
+          <div class="mini-avatar">S</div>
+          <div class="mini-avatar">J</div>
+          <div class="mini-avatar">A</div>
+          <div class="mini-avatar">M</div>
+          <span class="participant-count" id="modalParticipants">32 going</span>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="modalJoinBtn" onclick="joinFromModal()">I'm Going</button>
+          <button class="btn btn-outline" onclick="addToCalendar(); closeModal();">Add to Calendar</button>
+        </div>
+
+        <div class="modal-reminder">
+          <small>Upcoming Reminder</small>
+          <strong id="modalReminder">Clean Up Our Streets starts in 1 hour.</strong>
+          <p>You'll receive a notification before the activity begins.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Activity Modal (admin only) -->
+  <div class="modal-backdrop" id="newActivityModal">
+    <div class="activity-modal" style="max-width: 540px;">
+      <div class="modal-body">
+        <h3 style="margin-bottom: 16px;">New Activity</h3>
+        <div style="display: grid; gap: 12px;">
+          <label>Title<input id="newActivityTitle" placeholder="Example: Riverbank Clean-Up" /></label>
+          <label>Category<input id="newActivityCategory" placeholder="Example: Community Clean-Up" /></label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <label>Date<input id="newActivityDate" type="date" /></label>
+            <label>Time<input id="newActivityTime" placeholder="Example: 9:00 AM - 12:00 PM" /></label>
+          </div>
+          <label>Location<input id="newActivityLocation" placeholder="Example: Riverside Area" /></label>
+          <label>Organizer<input id="newActivityOrganizer" placeholder="Example: Tit4Tat Green Team" /></label>
+          <label>Description<textarea id="newActivityDescription" placeholder="What is this activity about?"></textarea></label>
+          <label>
+            Cover Image (optional)
+            <input id="newActivityCover" type="file" accept="image/png,image/jpeg,image/gif,image/webp" onchange="previewNewActivityCover()" />
+          </label>
+          <img id="newActivityCoverPreview" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:12px; margin-top:-4px;" alt="Cover preview" />
+        </div>
+        <div class="modal-actions" style="margin-top: 18px;">
+          <button class="btn btn-outline" onclick="closeNewActivityModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="submitNewActivity()">Create Activity</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let activities = [];
+    let selectedActivityIndex = 0;
+
+    const activityListEl = document.getElementById("activityList");
+    const myActivitiesEl = document.getElementById("myActivities");
+    const emptyStateEl = document.getElementById("emptyState");
+
+    function bgImageStyle(image) {
+      return image ? `background-image: url('${image}')` : "";
+    }
+
+    function renderActivities() {
+      activityListEl.innerHTML = "";
+
+      activities.forEach((activity, index) => {
+        const item = document.createElement("div");
+        item.className = `activity-item ${index === selectedActivityIndex ? "active" : ""}`;
+        item.onclick = () => selectActivity(index);
+
+        item.innerHTML = `
+          <div class="activity-thumb" style="${bgImageStyle(activity.image)}"></div>
+          <div class="activity-info">
+            <h4>${activity.title}</h4>
+            <p>${activity.category}<br>${activity.date} &bull; ${activity.time}<br>${activity.location}</p>
+          </div>
+          <span class="status ${activity.joined ? "going" : "open"}">
+            ${activity.joined ? "Going" : "Open"}
+          </span>
+        `;
+
+        activityListEl.appendChild(item);
+      });
+    }
+
+    function selectActivity(index) {
+      selectedActivityIndex = index;
+      const activity = activities[index];
+
+      // Populate modal
+      document.getElementById("modalHero").style.backgroundImage = activity.image ? `url('${activity.image}')` : "";
+      document.getElementById("modalCategory").textContent  = activity.category;
+      document.getElementById("modalTitle").textContent      = activity.title;
+      document.getElementById("modalDescription").textContent = activity.description;
+      document.getElementById("modalDate").textContent       = activity.date;
+      document.getElementById("modalTime").textContent       = activity.time;
+      document.getElementById("modalLocation").textContent   = activity.location;
+      document.getElementById("modalOrganizer").textContent  = activity.organizer;
+      document.getElementById("modalParticipants").textContent = `${activity.participants} going`;
+      document.getElementById("modalReminder").textContent   = `${activity.title} starts in 1 hour.`;
+
+      const joinBtn = document.getElementById("modalJoinBtn");
+      if (activity.joined) {
+        joinBtn.textContent = "&#10003; You're Going";
+        joinBtn.disabled = true;
+        joinBtn.style.opacity = "0.65";
+      } else {
+        joinBtn.textContent = "I'm Going";
+        joinBtn.disabled = false;
+        joinBtn.style.opacity = "";
+      }
+
+      openModal();
+      renderActivities();
+    }
+
+    async function joinActivity() {
+      const activity = activities[selectedActivityIndex];
+      try {
+        activities[selectedActivityIndex] = await window.Tit4TatAPI.joinActivity(activity.id);
+      } catch (err) {
+        showToast("Could not join this activity. Please try again.");
+        return;
+      }
+
+      renderActivities();
+      renderMyActivities();
+      showToast(`You joined "${activity.title}".`);
+    }
+
+    async function joinFromModal() {
+      await joinActivity();
+      // Refresh the join button state
+      const joinBtn = document.getElementById("modalJoinBtn");
+      joinBtn.textContent = "\u2713 You're Going";
+      joinBtn.disabled = true;
+      joinBtn.style.opacity = "0.65";
+      document.getElementById("modalParticipants").textContent =
+        `${activities[selectedActivityIndex].participants} going`;
+    }
+
+    function openModal() {
+      const modal = document.getElementById("activityModal");
+      modal.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("activityModal");
+      modal.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    function handleBackdropClick(e) {
+      if (e.target === document.getElementById("activityModal")) closeModal();
+    }
+
+    function renderMyActivities() {
+      const joined = activities.filter(a => a.joined);
+      myActivitiesEl.innerHTML = "";
+
+      if (joined.length === 0) {
+        emptyStateEl.style.display = "block";
+        return;
+      }
+
+      emptyStateEl.style.display = "none";
+
+      joined.forEach(activity => {
+        const card = document.createElement("div");
+        card.className = "mini-card";
+        card.innerHTML = `
+          <small>${activity.category}</small>
+          <h4>${activity.title}</h4>
+          <p style="color: var(--muted); font-size: 0.82rem;">${activity.date}</p>
+        `;
+        myActivitiesEl.appendChild(card);
+      });
+    }
+
+    function addToCalendar() {
+      showToast(`"${activities[selectedActivityIndex].title}" was added to your calendar.`);
+    }
+
+    function scrollToList() {
+      document.getElementById("activityListSection").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    async function renderAnnouncements() {
+      const el = document.getElementById("announcementsList");
+      let announcements;
+      try {
+        announcements = await window.Tit4TatAPI.getAnnouncements();
+      } catch (err) {
+        document.getElementById("announcementsSection").style.display = "none";
+        return;
+      }
+
+      if (announcements.length === 0) {
+        document.getElementById("announcementsSection").style.display = "none";
+        return;
+      }
+
+      el.innerHTML = announcements.map(a => `
+        <div class="announcement-item">
+          <h4>${a.title}</h4>
+          <p>${a.body}</p>
+          <small>${a.authorName} · ${new Date(a.createdAt).toLocaleDateString()}</small>
+        </div>
+      `).join("");
+    }
+
+    function openNewActivityModal() {
+      document.getElementById("newActivityModal").classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeNewActivityModal() {
+      document.getElementById("newActivityModal").classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    function previewNewActivityCover() {
+      const input = document.getElementById("newActivityCover");
+      const preview = document.getElementById("newActivityCoverPreview");
+      const file = input.files && input.files[0];
+
+      if (!file) {
+        preview.style.display = "none";
+        preview.removeAttribute("src");
+        return;
+      }
+
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    }
+
+    async function submitNewActivity() {
+      const title = document.getElementById("newActivityTitle").value.trim();
+      const category = document.getElementById("newActivityCategory").value.trim();
+      const date = document.getElementById("newActivityDate").value;
+      const time = document.getElementById("newActivityTime").value.trim();
+      const location = document.getElementById("newActivityLocation").value.trim();
+      const organizer = document.getElementById("newActivityOrganizer").value.trim();
+      const description = document.getElementById("newActivityDescription").value.trim();
+      const coverFile = document.getElementById("newActivityCover").files[0];
+
+      if (!title || !category || !date || !time || !location || !organizer || !description) {
+        showToast("Please fill in every field.");
+        return;
+      }
+
+      let created;
+      try {
+        created = await window.Tit4TatAPI.createActivity({
+          title, category, date, time, location, organizer, description
+        });
+      } catch (err) {
+        showToast("Could not create the activity.");
+        return;
+      }
+
+      if (coverFile) {
+        try {
+          created = await window.Tit4TatAPI.uploadActivityCover(created.id, coverFile);
+        } catch (err) {
+          showToast("Activity created, but the cover image could not be uploaded.");
+        }
+      }
+
+      activities.push(created);
+
+      closeNewActivityModal();
+      ["Title", "Category", "Date", "Time", "Location", "Organizer", "Description"].forEach(field => {
+        document.getElementById(`newActivity${field}`).value = "";
+      });
+      document.getElementById("newActivityCover").value = "";
+      document.getElementById("newActivityCoverPreview").style.display = "none";
+
+      renderActivities();
+      renderMobileCarousels();
+      showToast("Activity created.");
+    }
+
+    async function renderMobileCarousels() {
+      document.getElementById("mobileWelcomeName").textContent = currentUser.name;
+
+      const activityCarousel = document.getElementById("mobileActivityCarousel");
+      activityCarousel.innerHTML = activities.slice(0, 6).map((a, index) => `
+        <div class="mobile-activity-card" onclick="selectActivity(${index})">
+          <div class="thumb" style="${bgImageStyle(a.image)}"></div>
+          <div class="info">
+            <h4>${a.title}</h4>
+            <p>${a.date}</p>
+          </div>
+        </div>
+      `).join("");
+
+      let members = [];
+      try {
+        members = await window.Tit4TatAPI.getMembers();
+      } catch (err) {
+        // best-effort — the mobile members preview just stays empty
+      }
+
+      const membersCarousel = document.getElementById("mobileMembersCarousel");
+      membersCarousel.innerHTML = members.slice(0, 8).map(m => `
+        <div class="mobile-member-card" onclick="window.location.href='sectmemberprofile.html?id=${m.id}'">
+          <div class="avatar-circle">${m.avatarUrl ? `<img src="${m.avatarUrl}" alt="${m.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />` : m.initials}</div>
+          <span>${m.name.split(" ")[0]}</span>
+        </div>
+      `).join("");
+    }
+
+    async function renderMyStats() {
+      let stats;
+      try {
+        stats = await window.Tit4TatAPI.getMyStats();
+      } catch (err) {
+        return;
+      }
+
+      document.getElementById("myStatsSection").style.display = "grid";
+
+      document.getElementById("statActivitiesJoined").textContent = stats.activitiesJoined;
+      document.getElementById("statUpcoming").textContent = `${stats.upcomingActivities} upcoming across the community`;
+
+      document.getElementById("statReports").textContent = stats.reportsSubmitted;
+      const statusEntries = Object.entries(stats.reportsByStatus || {});
+      document.getElementById("statReportsBreakdown").textContent = statusEntries.length
+        ? statusEntries.map(([status, count]) => `${count} ${status}`).join(" · ")
+        : "No reports yet";
+
+      document.getElementById("statUnread").textContent = stats.unreadMessages;
+
+      const since = new Date(stats.memberSince);
+      document.getElementById("statMemberSince").textContent = since.toLocaleDateString(undefined, {
+        year: "numeric", month: "short"
+      });
+      document.getElementById("statMemberSinceRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+    }
+
+    async function renderBusinessCallout() {
+      let profile;
+      try {
+        profile = await window.Tit4TatAPI.getMyProfile();
+      } catch (err) {
+        return;
+      }
+
+      const callout = document.getElementById("businessCallout");
+      callout.style.display = "flex";
+
+      if (profile.businessName) {
+        document.getElementById("businessCalloutTitle").textContent = `🏪 ${profile.businessName}`;
+        document.getElementById("businessCalloutText").textContent = profile.essentialWorker
+          ? "Listed in the directory · marked as an essential worker."
+          : "Listed in the Community Directory for other members to see.";
+      } else {
+        document.getElementById("businessCalloutTitle").textContent = "List your business";
+        document.getElementById("businessCalloutText").textContent =
+          "Add a local business or mark yourself as an essential worker so other members can see it.";
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    // Escape key closes modal
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeModal();
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "activities", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      if (window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+        document.getElementById("newActivityBtn").style.display = "inline-flex";
+      } else {
+        // Dashboard analytics + business callout are member/regular-member
+        // specific; admins have their own overview dashboard already.
+        renderMyStats();
+        if (currentUser.role === "MEMBER") {
+          renderBusinessCallout();
+        }
+      }
+
+      renderAnnouncements();
+      activities = await window.Tit4TatAPI.getActivities();
+      renderActivities();
+      renderMyActivities();
+      renderMobileCarousels();
+    })();
+  </script>
+</body>
+</html>

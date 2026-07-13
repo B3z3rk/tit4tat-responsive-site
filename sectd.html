@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Tap Call &amp; Emergency</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only tap-call/emergency-page-specific rules are here. */
+
+    /* SUMMARY */
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .summary-card small {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .summary-card h3 {
+      font-size: 1.8rem;
+      margin: 8px 0 6px;
+    }
+
+    .summary-card p {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    /* LAYOUT */
+
+    .call-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    /* MEMBER PICKER */
+
+    .member-select-field {
+      margin-bottom: 20px;
+    }
+
+    .contact-profile {
+      text-align: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+
+    .contact-profile .member-avatar {
+      width: 84px;
+      height: 84px;
+      border-radius: 28px;
+      margin: 0 auto 12px;
+      font-size: 1.3rem;
+    }
+
+    .contact-profile h3 {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+
+    .contact-profile p {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .contact-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge.verified {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .badge.role {
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .tap-call-card {
+      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      border-radius: 18px;
+      padding: 18px;
+      color: white;
+      margin-bottom: 18px;
+    }
+
+    .tap-call-card h4 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .tap-call-card p {
+      opacity: 0.86;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .tap-call-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .call-options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .call-option {
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .call-option:hover {
+      border-color: var(--accent);
+      background: #fbf8ff;
+      transform: translateY(-1px);
+    }
+
+    .call-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    .call-option h4 {
+      font-size: 0.94rem;
+      margin-bottom: 3px;
+    }
+
+    .call-option span {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .emergency-call-box {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 18px;
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    .emergency-call-box h4 {
+      color: var(--danger);
+      margin-bottom: 8px;
+    }
+
+    .emergency-call-box p {
+      color: #7f1d1d;
+      font-size: 0.86rem;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    /* MODAL */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 8, 47, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .call-modal {
+      width: min(420px, 100%);
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .call-modal-header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      color: white;
+      padding: 28px 20px;
+    }
+
+    .call-modal-header .member-avatar {
+      margin: 0 auto 14px;
+      width: 78px;
+      height: 78px;
+      border-radius: 26px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .call-modal-header h3 {
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+    }
+
+    .call-modal-header span {
+      opacity: 0.8;
+      font-size: 0.88rem;
+    }
+
+    .call-modal-body {
+      padding: 22px;
+    }
+
+    .call-modal-body p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* CALL SCREEN */
+
+    .call-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at top, rgba(124, 58, 237, 0.4), transparent 30%),
+        linear-gradient(180deg, #14082f, #2d0b5f);
+      color: white;
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .call-screen.show {
+      display: flex;
+    }
+
+    .call-card {
+      width: min(420px, 100%);
+      text-align: center;
+    }
+
+    .call-card .member-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 40px;
+      margin: 0 auto 20px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      font-size: 1.8rem;
+    }
+
+    .call-card h2 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+    }
+
+    .call-card p {
+      opacity: 0.8;
+      margin-bottom: 24px;
+    }
+
+    .call-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+      margin-bottom: 30px;
+      font-weight: 800;
+    }
+
+    .pulse {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 rgba(34, 197, 94, 0.7);
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
+    .call-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: none;
+      display: grid;
+      place-items: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.16);
+      color: white;
+    }
+
+    .control-btn.end {
+      background: var(--danger);
+    }
+
+    /* RESPONSIVE (page-specific; shared.css handles app shell breakpoints) */
+
+    @media (max-width: 1050px) {
+      .call-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .modal-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Emergency Support</strong>
+        <p>Tap call a member, business, admin, or emergency services when quick contact is needed.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Tap Call &amp; Emergency</h2>
+            <p>Access emergency contacts, place urgent calls, and reach support quickly.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Alex Johnson</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Summary -->
+      <section class="summary-grid">
+        <div class="summary-card">
+          <small>Verified Members</small>
+          <h3 id="memberCount">0</h3>
+          <p>Members you can tap call</p>
+        </div>
+
+        <div class="summary-card">
+          <small>Online Now</small>
+          <h3 id="onlineCount">0</h3>
+          <p>Available to call right now</p>
+        </div>
+
+        <div class="summary-card">
+          <small>Emergency Contacts</small>
+          <h3>3</h3>
+          <p>Quick call contacts available</p>
+        </div>
+      </section>
+
+      <section class="call-layout">
+        <!-- Call a Member -->
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Call a Member</h3>
+              <p>Pick a verified member to tap call.</p>
+            </div>
+          </div>
+
+          <div class="member-select-field">
+            <select id="memberSelect" onchange="selectMemberForCall(this.value)"></select>
+          </div>
+
+          <div class="contact-profile">
+            <div class="member-avatar" id="callInitials">MA</div>
+            <h3 id="callName">Marsha Allen</h3>
+            <p id="callRole">Community Leader · Oak Street</p>
+
+            <div class="contact-badges">
+              <span class="badge verified">✅ Verified</span>
+              <span class="badge role" id="callBadge">Community Leader</span>
+            </div>
+          </div>
+
+          <div class="tap-call-actions">
+            <button class="btn btn-light" onclick="viewSelectedProfile()">View Profile</button>
+            <button class="btn btn-success" onclick="openCallModal('member')">📞 Tap to Call</button>
+          </div>
+        </section>
+
+        <!-- Right Panel: Tap Call -->
+        <aside class="section-card right-panel">
+          <div class="tap-call-card">
+            <h4>Need to reach someone fast?</h4>
+            <p>Use tap call when you need a quicker response than messaging.</p>
+            <button class="btn btn-light" style="width: 100%;" onclick="openCallModal('member')">
+              📞 Tap to Call Selected Member
+            </button>
+          </div>
+
+          <div class="section-header" style="margin-top: 10px;">
+            <div>
+              <h3>Quick Call Options</h3>
+              <p>Common call paths from the storyboard.</p>
+            </div>
+          </div>
+
+          <div class="call-options">
+            <div class="call-option" onclick="openCallModal('member')">
+              <div class="call-icon">👤</div>
+              <div>
+                <h4>Call Selected Member</h4>
+                <span>Contact the member picked on the left</span>
+              </div>
+              <strong>›</strong>
+            </div>
+
+            <div class="call-option" onclick="openCallModal('admin')">
+              <div class="call-icon">🛡️</div>
+              <div>
+                <h4>Call Community Admin</h4>
+                <span>Reach a Tit4Tat community representative</span>
+              </div>
+              <strong>›</strong>
+            </div>
+
+            <div class="call-option" onclick="openCallModal('business')">
+              <div class="call-icon">🏪</div>
+              <div>
+                <h4>Call Local Business</h4>
+                <span>Contact a listed community business</span>
+              </div>
+              <strong>›</strong>
+            </div>
+          </div>
+
+          <div class="emergency-call-box">
+            <h4>Emergency Call</h4>
+            <p>
+              For urgent safety, medical, fire, or police matters, use the emergency call option.
+            </p>
+            <button class="btn btn-danger" style="width: 100%;" onclick="openCallModal('emergency')">
+              🚨 Call Emergency Services
+            </button>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <!-- Call Confirmation Modal -->
+  <div class="modal-backdrop" id="callModal">
+    <div class="call-modal">
+      <div class="call-modal-header">
+        <div class="member-avatar" id="modalInitials">MA</div>
+        <h3 id="modalName">Marsha Allen</h3>
+        <span id="modalRole">Community Leader</span>
+      </div>
+
+      <div class="call-modal-body">
+        <p id="modalText">
+          You are about to start a call with this verified community member.
+        </p>
+
+        <div class="modal-actions">
+          <button class="btn btn-light" onclick="closeCallModal()">Cancel</button>
+          <button class="btn btn-success" onclick="startCall()">Start Call</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Call Screen -->
+  <div class="call-screen" id="callScreen">
+    <div class="call-card">
+      <div class="member-avatar" id="activeCallInitials">MA</div>
+      <h2 id="activeCallName">Marsha Allen</h2>
+      <p id="activeCallRole">Community Leader</p>
+
+      <div class="call-status">
+        <span class="pulse"></span>
+        <span id="activeCallStatus">Calling...</span>
+      </div>
+
+      <div class="call-controls">
+        <button class="control-btn" onclick="toggleMute()" aria-label="Toggle mute">🎙️</button>
+        <button class="control-btn" onclick="toggleSpeaker()" aria-label="Toggle speaker">🔊</button>
+        <button class="control-btn end" onclick="endCall()" aria-label="End call">📵</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let contacts = [];
+    let callTargets = {};
+
+    let selectedContactIndex = 0;
+    let selectedCallTarget = null;
+    let selectedCallType = null;
+    let muted = false;
+    let speaker = false;
+
+    function renderSummary() {
+      const onlineTotal = contacts.filter(item => item.status === "Online").length;
+
+      document.getElementById("memberCount").textContent = contacts.length;
+      document.getElementById("onlineCount").textContent = onlineTotal;
+    }
+
+    function renderMemberOptions() {
+      const select = document.getElementById("memberSelect");
+      select.innerHTML = contacts
+        .map((contact, index) => `<option value="${index}">${contact.name}</option>`)
+        .join("");
+    }
+
+    function selectMemberForCall(index) {
+      selectedContactIndex = Number(index);
+      const contact = contacts[selectedContactIndex];
+      if (!contact) return;
+
+      document.getElementById("memberSelect").value = String(selectedContactIndex);
+      document.getElementById("callInitials").innerHTML = contact.avatarUrl
+        ? `<img src="${contact.avatarUrl}" alt="${contact.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`
+        : contact.initials;
+      document.getElementById("callName").textContent = contact.name;
+      document.getElementById("callRole").textContent = `${contact.role || ""} · ${contact.location || ""}`;
+      document.getElementById("callBadge").textContent = contact.role || "";
+    }
+
+    function viewSelectedProfile() {
+      const contact = contacts[selectedContactIndex];
+      if (!contact) return;
+      window.location.href = `sectmemberprofile.html?id=${contact.id}`;
+    }
+
+    function openCallModal(type) {
+      selectedCallType = type;
+
+      if (type === "member") {
+        const contact = contacts[selectedContactIndex];
+        if (!contact) {
+          showToast("No member selected to call.");
+          return;
+        }
+
+        selectedCallTarget = {
+          name: contact.name,
+          initials: contact.initials,
+          role: contact.role,
+          text: "You are about to start a call with this verified community member."
+        };
+      } else {
+        selectedCallTarget = callTargets[type];
+      }
+
+      document.getElementById("modalInitials").textContent = selectedCallTarget.initials;
+      document.getElementById("modalName").textContent = selectedCallTarget.name;
+      document.getElementById("modalRole").textContent = selectedCallTarget.role;
+      document.getElementById("modalText").textContent = selectedCallTarget.text;
+
+      document.getElementById("callModal").classList.add("show");
+    }
+
+    function closeCallModal() {
+      document.getElementById("callModal").classList.remove("show");
+    }
+
+    async function startCall() {
+      if (!selectedCallTarget) return;
+
+      closeCallModal();
+
+      document.getElementById("activeCallInitials").textContent = selectedCallTarget.initials;
+      document.getElementById("activeCallName").textContent = selectedCallTarget.name;
+      document.getElementById("activeCallRole").textContent = selectedCallTarget.role;
+      document.getElementById("activeCallStatus").textContent =
+        selectedCallTarget.role === "Emergency Contact" ? "Connecting emergency call..." : "Calling...";
+
+      document.getElementById("callScreen").classList.add("show");
+
+      try {
+        await window.Tit4TatAPI.logEmergencyCall(selectedCallType, selectedCallTarget.name);
+      } catch (err) {
+        // logging the call is best-effort and shouldn't block the simulated call UX
+      }
+
+      setTimeout(() => {
+        if (document.getElementById("callScreen").classList.contains("show")) {
+          document.getElementById("activeCallStatus").textContent = "Connected";
+        }
+      }, 1800);
+    }
+
+    function endCall() {
+      document.getElementById("callScreen").classList.remove("show");
+      muted = false;
+      speaker = false;
+      showToast("Call ended.");
+    }
+
+    function toggleMute() {
+      muted = !muted;
+      showToast(muted ? "Microphone muted." : "Microphone unmuted.");
+    }
+
+    function toggleSpeaker() {
+      speaker = !speaker;
+      showToast(speaker ? "Speaker enabled." : "Speaker disabled.");
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "emergency", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      [contacts, callTargets] = await Promise.all([
+        window.Tit4TatAPI.getContacts(),
+        window.Tit4TatAPI.getEmergencyTargets()
+      ]);
+
+      renderSummary();
+      renderMemberOptions();
+
+      if (contacts.length) {
+        const params = new URLSearchParams(window.location.search);
+        const requestedId = params.get("callContact");
+        const requestedIndex = requestedId
+          ? contacts.findIndex(c => String(c.id) === requestedId)
+          : -1;
+
+        selectMemberForCall(requestedIndex >= 0 ? requestedIndex : 0);
+
+        if (requestedIndex >= 0) {
+          openCallModal("member");
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

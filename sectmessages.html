@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Messages</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only messages-page-specific rules are here. */
+
+    /* SUMMARY */
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .summary-card small {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .summary-card h3 {
+      font-size: 1.8rem;
+      margin: 8px 0 6px;
+    }
+
+    .summary-card p {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    /* LAYOUT */
+
+    .messages-layout {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    /* CONVERSATION LIST */
+
+    /* Fixed to match the chat card's height, with the list itself scrolling
+       internally, so a long contact list can't push the chat window (and the
+       page) taller than the viewport. */
+    .conversations-card {
+      height: 680px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .conversations-card .section-header {
+      flex-shrink: 0;
+    }
+
+    .search-box {
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .conversation-list {
+      display: grid;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .conversation-item {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      background: #fff;
+    }
+
+    .conversation-item:hover,
+    .conversation-item.active {
+      border-color: var(--accent);
+      background: #fbf8ff;
+      box-shadow: 0 8px 18px rgba(124, 58, 237, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .conversation-info h4 {
+      font-size: 0.94rem;
+      margin-bottom: 4px;
+    }
+
+    .conversation-info p {
+      color: var(--muted);
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    .conversation-meta {
+      text-align: right;
+      display: grid;
+      gap: 6px;
+      justify-items: end;
+    }
+
+    .conversation-meta small {
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .unread-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--danger);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    /* CHAT */
+
+    .chat-card {
+      min-height: 680px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .chat-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-user h3 {
+      font-size: 1.05rem;
+      margin-bottom: 3px;
+    }
+
+    .chat-user span {
+      color: var(--success);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .chat-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chat-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.08), transparent 30%),
+        #fff;
+      max-height: 520px;
+    }
+
+    .message-row {
+      display: flex;
+    }
+
+    .message-row.sent {
+      justify-content: flex-end;
+    }
+
+    .message-bubble {
+      max-width: 72%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      position: relative;
+    }
+
+    .message-row.received .message-bubble {
+      background: #f1eef8;
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-row.sent .message-bubble {
+      background: var(--primary);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-time {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+
+    .composer {
+      border-top: 1px solid var(--border);
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      background: white;
+    }
+
+    .composer input {
+      border-radius: 999px;
+    }
+
+    /* On desktop widths (where the two-column layout below is actually shown),
+       pin everything to one viewport height instead of letting the page scroll —
+       only the conversation list and chat body scroll internally. Left as normal
+       page scrolling below 1050px, where panels stack and need more room than a
+       phone/tablet viewport can give without a page scroll. */
+    @media (min-width: 1051px) {
+      html, body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .app-layout {
+        height: 100vh;
+      }
+
+      .main {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .summary-grid {
+        flex-shrink: 0;
+      }
+
+      .messages-layout {
+        flex: 1;
+        min-height: 0;
+        /* Without an explicit row track, the grid's implicit row sizes to its
+           content's natural height rather than the flex-computed space above,
+           so the overflow spills past .main's edge and gets clipped by its
+           overflow:hidden instead of scrolling internally. Pinning the row to
+           the container's own height fixes that. */
+        grid-template-rows: minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .conversations-card {
+        height: 100%;
+        min-height: 0;
+      }
+
+      .chat-card {
+        height: 100%;
+        min-height: 0;
+      }
+
+      .chat-body {
+        max-height: none;
+      }
+    }
+
+    /* RESPONSIVE (page-specific; shared.css handles app shell breakpoints) */
+
+    @media (max-width: 1050px) {
+      .messages-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .conversations-card {
+        height: 360px;
+      }
+
+      .chat-card {
+        min-height: 620px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .chat-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .chat-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .message-bubble {
+        max-width: 88%;
+      }
+
+      .composer {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Messaging</strong>
+        <p>Message any verified member in the community directory.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Messages</h2>
+            <p>Chat with verified members of your community.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Alex Johnson</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Summary -->
+      <section class="summary-grid">
+        <div class="summary-card">
+          <small>Unread Messages</small>
+          <h3 id="unreadCount">0</h3>
+          <p>New messages awaiting response</p>
+        </div>
+
+        <div class="summary-card">
+          <small>Active Chats</small>
+          <h3 id="chatCount">0</h3>
+          <p>Current member conversations</p>
+        </div>
+
+        <div class="summary-card">
+          <small>Online Contacts</small>
+          <h3 id="onlineCount">0</h3>
+          <p>Available to message right now</p>
+        </div>
+      </section>
+
+      <section class="messages-layout">
+        <!-- Conversation List -->
+        <section class="section-card conversations-card">
+          <div class="section-header">
+            <div>
+              <h3>Conversations</h3>
+              <p>Select a conversation to view messages.</p>
+            </div>
+          </div>
+
+          <div class="search-box">
+            <input
+              id="conversationSearch"
+              type="text"
+              placeholder="Search conversations..."
+              oninput="filterConversations()"
+            />
+          </div>
+
+          <div class="conversation-list" id="conversationList"></div>
+        </section>
+
+        <!-- Chat Window -->
+        <section class="section-card chat-card">
+          <div class="chat-header">
+            <div class="chat-user">
+              <div class="member-avatar" id="chatInitials">MA</div>
+              <div>
+                <h3 id="chatName">Marsha Allen</h3>
+                <span id="chatStatus">Online</span>
+              </div>
+            </div>
+
+            <div class="chat-actions">
+              <button class="btn btn-light" onclick="viewProfile()">View Profile</button>
+              <button class="btn btn-success btn-circle" onclick="callThisContact()" aria-label="Call this member">📞</button>
+            </div>
+          </div>
+
+          <div class="chat-body" id="chatBody"></div>
+
+          <div class="composer">
+            <input
+              id="messageInput"
+              type="text"
+              placeholder="Type your message..."
+              onkeydown="handleMessageEnter(event)"
+            />
+            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let contacts = [];
+    let filteredContacts = [];
+    let currentThreadMessages = [];
+    let selectedContactIndex = 0;
+
+    const conversationList = document.getElementById("conversationList");
+    const chatBody = document.getElementById("chatBody");
+
+    function avatarHtml(contact) {
+      if (contact.avatarUrl) {
+        return `<img src="${contact.avatarUrl}" alt="${contact.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`;
+      }
+      return contact.initials;
+    }
+
+    function renderSummary() {
+      const unreadTotal = contacts.reduce((sum, item) => sum + item.unread, 0);
+      const onlineTotal = contacts.filter(item => item.status === "Online").length;
+
+      document.getElementById("unreadCount").textContent = unreadTotal;
+      document.getElementById("chatCount").textContent = contacts.length;
+      document.getElementById("onlineCount").textContent = onlineTotal;
+    }
+
+    function renderConversations(list = filteredContacts) {
+      conversationList.innerHTML = "";
+
+      list.forEach((contact) => {
+        const actualIndex = contacts.findIndex(item => item.id === contact.id);
+
+        const item = document.createElement("div");
+        item.className = `conversation-item ${actualIndex === selectedContactIndex ? "active" : ""}`;
+        item.onclick = () => selectConversation(actualIndex);
+
+        item.innerHTML = `
+          <div class="member-avatar">${avatarHtml(contact)}</div>
+
+          <div class="conversation-info">
+            <h4>${contact.name}</h4>
+            <p>${contact.lastMessage}</p>
+          </div>
+
+          <div class="conversation-meta">
+            <small>${contact.lastTime}</small>
+            ${contact.unread > 0 ? `<span class="unread-dot">${contact.unread}</span>` : ""}
+          </div>
+        `;
+
+        conversationList.appendChild(item);
+      });
+    }
+
+    async function selectConversation(index) {
+      selectedContactIndex = index;
+
+      const contact = contacts[index];
+      contact.unread = 0;
+
+      document.getElementById("chatInitials").innerHTML = avatarHtml(contact);
+      document.getElementById("chatName").textContent = contact.name;
+      document.getElementById("chatStatus").textContent = contact.status;
+
+      currentThreadMessages = await window.Tit4TatAPI.getThread(contact.id);
+      renderChat();
+      renderConversations(filteredContacts);
+      renderSummary();
+    }
+
+    function renderChat() {
+      chatBody.innerHTML = "";
+
+      currentThreadMessages.forEach(message => {
+        const row = document.createElement("div");
+        row.className = `message-row ${message.type}`;
+
+        row.innerHTML = `
+          <div class="message-bubble">
+            ${message.text}
+            <span class="message-time">${message.time}</span>
+          </div>
+        `;
+
+        chatBody.appendChild(row);
+      });
+
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+
+      if (!text) {
+        showToast("Type a message first.");
+        return;
+      }
+
+      const contact = contacts[selectedContactIndex];
+      let sent;
+      try {
+        sent = await window.Tit4TatAPI.sendMessage(contact.id, text);
+      } catch (err) {
+        showToast("Could not send message.");
+        return;
+      }
+
+      currentThreadMessages.push(sent);
+      contact.lastMessage = text;
+      contact.lastTime = sent.time;
+
+      input.value = "";
+
+      renderChat();
+      renderConversations(filteredContacts);
+      showToast("Message sent.");
+    }
+
+    function handleMessageEnter(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    }
+
+    function filterConversations() {
+      const searchValue = document.getElementById("conversationSearch").value.toLowerCase();
+
+      filteredContacts = contacts.filter(contact => {
+        return (
+          contact.name.toLowerCase().includes(searchValue) ||
+          (contact.role || "").toLowerCase().includes(searchValue) ||
+          (contact.location || "").toLowerCase().includes(searchValue) ||
+          contact.lastMessage.toLowerCase().includes(searchValue)
+        );
+      });
+
+      renderConversations(filteredContacts);
+    }
+
+    function viewProfile() {
+      const contact = contacts[selectedContactIndex];
+      if (!contact) return;
+      window.location.href = `sectmemberprofile.html?id=${contact.id}`;
+    }
+
+    function callThisContact() {
+      const contact = contacts[selectedContactIndex];
+      if (!contact) return;
+      window.location.href = `sectd.html?callContact=${contact.id}`;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+    async function pollNewMessages() {
+      const contact = contacts[selectedContactIndex];
+      if (!contact) return;
+
+      const lastId = currentThreadMessages.length
+        ? currentThreadMessages[currentThreadMessages.length - 1].id
+        : 0;
+
+      let delta;
+      try {
+        delta = await window.Tit4TatAPI.getThread(contact.id, lastId);
+      } catch (err) {
+        return;
+      }
+
+      if (delta.length) {
+        currentThreadMessages = currentThreadMessages.concat(delta);
+        renderChat();
+      }
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "messages", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      contacts = await window.Tit4TatAPI.getContacts();
+      filteredContacts = [...contacts];
+
+      renderSummary();
+      renderConversations();
+
+      if (contacts.length) {
+        const params = new URLSearchParams(window.location.search);
+        const requestedId = params.get("contact");
+        const requestedIndex = requestedId
+          ? contacts.findIndex(c => String(c.id) === requestedId)
+          : -1;
+
+        await selectConversation(requestedIndex >= 0 ? requestedIndex : 0);
+      }
+
+      setInterval(pollNewMessages, 4000);
+    })();
+  </script>
+</body>
+</html>

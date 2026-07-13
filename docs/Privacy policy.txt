@@ -1,0 +1,201 @@
+Tit4Tat Privacy Policy
+
+Effective Date: Juy 2026
+Platform Name: Tit4Tat
+Operator: GERL
+Contact Email: gerl@ict.org
+
+1. Introduction
+
+Tit4Tat respects your privacy. This Privacy Policy explains how we collect, use, store, share, and protect personal information when you use the Tit4Tat platform.
+
+Because Tit4Tat is a verified community platform, we may collect sensitive verification information such as ID, references, utility bills, community location, reports, and communication records.
+
+This Policy should be read together with the Tit4Tat Terms of Service.
+
+2. Legal and Privacy Context
+
+Tit4Tat is designed to handle personal information responsibly and transparently. In Jamaica, the Data Protection Act, 2020 governs how personal data should be processed. The Office of the Information Commissioner states that data controllers are required to comply with eight data protection standards under the Act.
+
+The Jamaica Information Service explains that data subject consent should be sought, obtained, and recorded, and that consent can be withdrawn.
+
+3. Information We Collect
+
+Tit4Tat may collect the following types of information.
+
+Account Information
+
+Name; email address; phone number; password or authentication details; profile photo; community area; account role; and account status.
+
+Verification Information
+
+References; valid ID; utility bill or proof of address; documents submitted for registration; approval or rejection notes; and admin verification records.
+
+Community Information
+
+Community affiliation; address area or general location; local group membership; activity participation; RSVP records; and member directory information.
+
+Report Information
+
+Report title; report category; report description; location; priority level; photos or videos; report status; timeline updates; admin notes; and related communication.
+
+Communication Information
+
+Messages sent through the platform; call request logs; support messages; admin announcements; and notifications.
+
+Device and Technical Information
+
+IP address; browser type; device type; operating system; login times; usage activity; error logs; and security-related records.
+
+Emergency Feature Information
+
+Emergency report details; selected emergency contact type; location information if enabled; time of emergency request; and related communication logs.
+
+4. How We Use Your Information
+
+Tit4Tat may use personal information to:
+
+Create and manage user accounts; verify eligibility to join the community; review references, ID, and utility bill submissions; approve, reject, or manage registration requests; provide access to community features; display member directory information; enable reports and issue tracking; support messaging and communication; manage community activities; notify users of updates; improve safety and security; prevent misuse, fraud, or unauthorized access; respond to support requests; maintain platform records; and comply with legal or regulatory obligations.
+
+5. Verification Documents
+
+Documents submitted during registration are used only for verification, platform safety, and administrative review.
+
+Access to verification documents should be limited to authorized admins or personnel who need access for approval, audit, security, or legal purposes.
+
+Tit4Tat should not publicly display ID documents, utility bills, or reference details to regular members.
+
+6. Sharing of Information
+
+Tit4Tat may share personal information in limited cases.
+
+With Community Admins
+
+Admins may access member registration information, report details, activity records, and other information needed to manage the platform.
+
+With Other Members
+
+Other members may see limited profile information such as name, role, general area, business listing, specialty, availability, and verified status.
+
+With Service Providers
+
+Tit4Tat may use third-party service providers for hosting, storage, email, SMS, authentication, analytics, support, or security.
+
+With Local Authorities or Emergency Contacts
+
+Where necessary to address safety concerns, emergencies, community risks, or legal obligations, Tit4Tat may share relevant report or contact information.
+
+With Legal or Regulatory Bodies
+
+Tit4Tat may disclose information where required by law, court order, lawful request, investigation, or regulatory obligation.
+
+7. What We Do Not Do
+
+Tit4Tat does not sell users’ personal information.
+
+Tit4Tat does not publicly display private registration documents.
+
+Tit4Tat does not allow unverified outsiders to browse private community information.
+
+Tit4Tat does not use emergency information for advertising.
+
+8. User Consent
+
+By registering for Tit4Tat and using the platform, you consent to the collection and use of your information as described in this Privacy Policy.
+
+Where consent is required, Tit4Tat should record and manage that consent. Users may withdraw consent where legally allowed, but withdrawing consent may limit or prevent use of the platform.
+
+9. Data Retention
+
+Tit4Tat should retain personal information only for as long as necessary for the purpose it was collected, including account management, community verification, report tracking, dispute handling, safety, audit, and legal compliance.
+
+Suggested retention approach:
+
+Data Type	Suggested Retention
+Account profile	While account is active
+Verification documents	Until verification is complete, then securely deleted or retained only where legally/operationally necessary
+Reports	As long as needed for tracking, audit, and community records
+Messages	While account is active or as needed for moderation/legal reasons
+Emergency logs	As long as needed for safety, audit, or legal purposes
+Deleted accounts	Retain limited records only where necessary for legal, security, or dispute purposes
+10. Data Security
+
+Tit4Tat should use reasonable technical and organizational measures to protect personal information, including:
+
+Access controls; password protection; encryption where appropriate; secure hosting; admin role restrictions; activity logs; document access limitations; secure deletion where possible; backups; and monitoring for unauthorized access.
+
+No system can be guaranteed completely secure, but Tit4Tat should take appropriate steps to reduce risk.
+
+11. User Rights
+
+Depending on applicable law, users may have rights relating to their personal data, including the right to:
+
+Access personal information held about them; request correction of inaccurate information; request deletion where appropriate; withdraw consent where applicable; object to certain uses; request restriction of processing; and ask questions about how their data is used.
+
+Jamaica’s Data Protection Act, 2020 includes standards and rights relating to the processing of personal data.
+
+To make a privacy request, users may contact:
+
+Privacy Contact: [Insert Email]
+
+12. Children and Minors
+
+Tit4Tat is intended for community members who are old enough to register and provide valid verification information.
+
+If minors are allowed to use Tit4Tat, the platform should require parent/guardian consent and additional safeguards. Until such safeguards are implemented, Tit4Tat should not knowingly collect personal information from children.
+
+13. Location Information
+
+Tit4Tat may collect general location information for community membership, reports, emergency features, and issue tracking.
+
+Precise location should only be collected where necessary, such as when submitting a report or using emergency features.
+
+Users should avoid sharing another person’s precise location without permission unless there is a safety or emergency reason.
+
+14. Photos, Videos, and Evidence
+
+Users may upload photos or videos as part of reports or activities.
+
+Users should not upload images that unnecessarily expose private persons, homes, vehicle plates, children, sensitive documents, or unrelated personal information.
+
+Tit4Tat may remove images or videos that violate privacy, safety, or community rules.
+
+15. Messaging Privacy
+
+Tit4Tat messages are intended for communication between verified members.
+
+Messages may be reviewed by admins only where necessary to investigate abuse, threats, safety concerns, technical issues, legal requirements, or Terms of Service violations.
+
+Users should not assume that platform messages are suitable for highly confidential matters.
+
+16. Third-Party Links and Services
+
+Tit4Tat may contain links to third-party websites, businesses, services, or emergency contacts.
+
+Tit4Tat is not responsible for the privacy practices, content, or actions of third parties. Users should review third-party privacy policies before sharing information with them.
+
+17. Data Breach or Security Incident
+
+If Tit4Tat becomes aware of a security incident affecting personal information, it should take reasonable steps to investigate, contain, and address the issue.
+
+Where required, Tit4Tat may notify affected users, regulators, or other relevant parties.
+
+18. International Data Transfers
+
+If Tit4Tat uses cloud hosting or third-party services located outside Jamaica, personal data may be processed or stored in another country.
+
+Tit4Tat should take reasonable steps to ensure that service providers protect personal data appropriately.
+
+19. Changes to This Privacy Policy
+
+Tit4Tat may update this Privacy Policy from time to time. Users will be notified of material changes through the platform, email, or other reasonable method.
+
+Continued use of Tit4Tat after updates means you accept the revised Privacy Policy.
+
+20. Contact Us
+
+For privacy questions, requests, or concerns, contact:
+
+Tit4Tat Support
+Email: t4tsupport@tit4tat.com
+Address: 4 Oak Lane

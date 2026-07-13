@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.pyc
+
+# Local SQLite database (created + seeded automatically on first run)
+backend/tit4tat.db
+
+# User-uploaded content generated at runtime
+uploads/

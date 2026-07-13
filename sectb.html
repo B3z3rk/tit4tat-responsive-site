@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Community Reports</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only report-page-specific rules are defined here. */
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
+      gap: 24px;
+    }
+
+    /* TABS */
+
+    .tab-bar {
+      display: flex;
+      gap: 5px;
+      background: var(--primary-light);
+      border-radius: 18px;
+      padding: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 11px 14px;
+      border-radius: 13px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--muted);
+      background: transparent;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      background: rgba(75, 22, 143, 0.08);
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 10px rgba(75, 22, 143, 0.12);
+    }
+
+    .tab-panel {
+      display: none;
+      animation: tab-in 0.2s ease both;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes tab-in {
+      from { transform: translateY(5px); }
+      to   { transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      /* At narrow widths, "min-width + flex:1 + white-space:nowrap" was
+         squeezing all 4 tabs onto one line and letting their nowrap text
+         spill into neighboring tabs. A horizontally-scrollable strip (each
+         tab kept at its natural width) avoids the overlap entirely. */
+      .tab-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .tab-bar::-webkit-scrollbar { display: none; }
+
+      .tab-btn {
+        flex: none;
+        min-width: max-content;
+        scroll-snap-align: start;
+        font-size: 0.8rem;
+        padding: 10px 14px;
+      }
+    }
+
+    /* CATEGORY CARDS */
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .category-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      background: #fff;
+    }
+
+    .category-card:hover,
+    .category-card.active {
+      border-color: var(--accent);
+      background: #fbf8ff;
+      box-shadow: 0 8px 18px rgba(124, 58, 237, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .category-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+    }
+
+    .category-card h4 {
+      margin-bottom: 6px;
+      font-size: 0.98rem;
+    }
+
+    .category-card p {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    /* FORM */
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: grid;
+      gap: 7px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 110px;
+    }
+
+    .upload-box {
+      border: 1px dashed var(--accent);
+      background: #fbf8ff;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .upload-box strong {
+      display: block;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    /* TABLE */
+
+    .reports-table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr {
+      cursor: pointer;
+    }
+
+    tbody tr:hover {
+      background: #fbf8ff;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status.submitted {
+      color: var(--info);
+      background: #dbeafe;
+    }
+
+    .status.review {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .status.resolved {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .status.urgent {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .priority {
+      font-weight: 900;
+      font-size: 0.82rem;
+    }
+
+    .priority.low {
+      color: var(--success);
+    }
+
+    .priority.medium {
+      color: var(--warning);
+    }
+
+    .priority.high {
+      color: var(--danger);
+    }
+
+    /* DETAILS PANEL */
+
+    .report-hero {
+      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      color: white;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .report-hero small {
+      opacity: 0.75;
+      font-weight: 800;
+    }
+
+    .report-hero h3 {
+      margin: 8px 0;
+      font-size: 1.4rem;
+    }
+
+    .report-hero p {
+      opacity: 0.9;
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .timeline {
+      border-left: 2px solid var(--border);
+      margin-left: 12px;
+      padding-left: 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .timeline-item {
+      position: relative;
+    }
+
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -27px;
+      top: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid white;
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .timeline-item strong {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+
+    .timeline-item span {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .emergency-box {
+      margin-top: 24px;
+      border-radius: 18px;
+      padding: 18px;
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+    }
+
+    .emergency-box h4 {
+      color: var(--danger);
+      margin-bottom: 8px;
+    }
+
+    .emergency-box p {
+      color: #7f1d1d;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin-bottom: 14px;
+    }
+
+    /* RESPONSIVE (page-specific; shared.css handles app shell breakpoints) */
+
+    @media (max-width: 1100px) {
+      .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .category-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        justify-content: stretch;
+      }
+
+      .form-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Reporting Status</strong>
+        <p>5 reports are currently being reviewed by community admins.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Community Reports</h2>
+            <p>Report issues, track updates, and help keep the community safe.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="notification" role="img" aria-label="Notifications: 4 unread">
+            🔔
+            <span>4</span>
+          </div>
+
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Alex Johnson</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Stats -->
+      <!-- <section class="stats-grid">
+        <div class="stat-card">
+          <small>Total Reports</small>
+          <h3 id="totalReports">0</h3>
+          <p>Submitted by members</p>
+        </div>
+
+        <div class="stat-card">
+          <small>Under Review</small>
+          <h3 id="underReview">0</h3>
+          <p>Awaiting admin action</p>
+        </div>
+
+        <div class="stat-card">
+          <small>Resolved</small>
+          <h3 id="resolvedReports">0</h3>
+          <p>Completed reports</p>
+        </div>
+
+        <div class="stat-card">
+          <small>Urgent</small>
+          <h3 id="urgentReports">0</h3>
+          <p>Needs quick attention</p>
+        </div>
+      </section> -->
+
+      <!-- Tab Navigation -->
+      <div class="tab-bar" role="tablist">
+        <button class="tab-btn active" id="tab-btn-categories" role="tab" onclick="switchTab('categories')">&#128203; Select Category</button>
+        <button class="tab-btn" id="tab-btn-submit" role="tab" onclick="switchTab('submit')">&#128221; Submit Report</button>
+        <button class="tab-btn" id="tab-btn-reports" role="tab" onclick="switchTab('reports')">&#128196; My Reports</button>
+        <button class="tab-btn" id="tab-btn-details" role="tab" onclick="switchTab('details')">&#128269; Report Details</button>
+      </div>
+
+      <!-- Tab: Select Category -->
+      <div class="tab-panel active" id="tab-categories" role="tabpanel">
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>What are you reporting?</h3>
+              <p>Select a category to begin your report.</p>
+            </div>
+          </div>
+          <div class="category-grid" id="categoryGrid"></div>
+        </section>
+      </div>
+
+      <!-- Tab: Submit Report -->
+      <div class="tab-panel" id="tab-submit" role="tabpanel">
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Submit Report</h3>
+              <p>Provide the details needed for the community team to respond.</p>
+            </div>
+            <button class="btn btn-light" onclick="switchTab('categories')">&#8592; Back</button>
+          </div>
+
+            <form id="reportForm">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="reportCategory">Category</label>
+                  <select id="reportCategory" required>
+                    <option value="">Select category</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="priority">Priority</label>
+                  <select id="priority" required>
+                    <option value="">Select priority</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Urgent">Urgent</option>
+                  </select>
+                </div>
+
+                <div class="form-group full">
+                  <label for="title">Report Title</label>
+                  <input
+                    id="title"
+                    type="text"
+                    placeholder="Example: Broken streetlight near the corner shop"
+                    required
+                  />
+                </div>
+
+                <div class="form-group full">
+                  <label for="location">Location</label>
+                  <input
+                    id="location"
+                    type="text"
+                    placeholder="Example: Pine Avenue, near Lot 12"
+                    required
+                  />
+                </div>
+
+                <div class="form-group full">
+                  <label for="description">Description</label>
+                  <textarea
+                    id="description"
+                    placeholder="Describe the issue, when it started, and any immediate risks..."
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="form-group full">
+                  <label>Evidence</label>
+                  <div class="upload-box" onclick="fakeUpload()">
+                    <strong>Click to upload photo or video</strong>
+                    <span id="uploadText">No file selected. This is a front-end placeholder.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn btn-light" type="reset">Clear Form</button>
+                <button class="btn btn-primary" type="submit">Submit Report</button>
+              </div>
+            </form>
+          </section>
+        </div>
+
+      <!-- Tab: My Reports -->
+      <div class="tab-panel" id="tab-reports" role="tabpanel">
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>My Reports</h3>
+              <p>View the status of reports you have submitted.</p>
+            </div>
+            <button class="btn btn-outline" onclick="filterUrgent()">View Urgent</button>
+          </div>
+
+          <div class="reports-table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Report ID</th>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab: Report Details -->
+      <div class="tab-panel" id="tab-details" role="tabpanel">
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Report Details</h3>
+              <p>Track the selected issue and its updates.</p>
+            </div>
+            <button class="btn btn-light" onclick="switchTab('reports')">&#8592; Back to My Reports</button>
+          </div>
+
+          <div class="report-hero">
+            <small id="detailId">T4T-RPT-001</small>
+            <h3 id="detailTitle">Broken Streetlight</h3>
+            <p id="detailDescription">
+              Streetlight has been out for several nights and the area is very dark.
+            </p>
+          </div>
+
+          <div class="detail-list">
+            <div class="detail-row">
+              <div class="detail-icon">&#128204;</div>
+              <div>
+                <strong>Category</strong>
+                <span id="detailCategory">Streetlight</span>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon">&#128205;</div>
+              <div>
+                <strong>Location</strong>
+                <span id="detailLocation">Pine Avenue, near Lot 12</span>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon">&#9888;</div>
+              <div>
+                <strong>Priority</strong>
+                <span id="detailPriority">High</span>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon">&#128202;</div>
+              <div>
+                <strong>Status</strong>
+                <span id="detailStatus">Under Review</span>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon">&#128100;</div>
+              <div>
+                <strong>Submitted By</strong>
+                <span id="detailSubmittedBy">Alex Johnson</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-row" id="adminStatusControl" style="display: none; margin-bottom: 18px;">
+            <div class="detail-icon">&#9881;&#65039;</div>
+            <div>
+              <strong>Admin: Update Status</strong>
+              <div style="display:flex; gap:8px; margin-top:6px;">
+                <select id="statusSelect">
+                  <option value="Submitted">Submitted</option>
+                  <option value="Under Review">Under Review</option>
+                  <option value="Urgent">Urgent</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+                <button class="btn btn-primary" onclick="updateReportStatus()">Update</button>
+              </div>
+            </div>
+          </div>
+
+          <h3 style="font-size:1rem; margin-bottom:14px;">Update Timeline</h3>
+          <div class="timeline" id="timeline"></div>
+
+          <div class="emergency-box">
+            <h4>Is this an emergency?</h4>
+            <p>
+              If the issue is an immediate threat to life, safety, or property,
+              use emergency reporting instead of a standard community report.
+            </p>
+            <button class="btn btn-danger" style="width:100%;" onclick="emergencyReport()">
+              &#128680; Emergency Report
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let categories = [];
+    let reports = [];
+
+    let selectedReportIndex = 0;
+    let selectedCategory = "";
+
+    const categoryGrid = document.getElementById("categoryGrid");
+    const reportCategory = document.getElementById("reportCategory");
+    const reportsTable = document.getElementById("reportsTable");
+
+    function renderCategories() {
+      categoryGrid.innerHTML = "";
+      reportCategory.innerHTML = `<option value="">Select category</option>`;
+
+      categories.forEach((category) => {
+        const card = document.createElement("div");
+        card.className = `category-card ${category.name === selectedCategory ? "active" : ""}`;
+        card.onclick = () => selectCategory(category.name);
+
+        card.innerHTML = `
+          <div class="category-icon">${category.icon}</div>
+          <h4>${category.name}</h4>
+          <p>${category.description}</p>
+        `;
+
+        categoryGrid.appendChild(card);
+
+        const option = document.createElement("option");
+        option.value = category.name;
+        option.textContent = category.name;
+        reportCategory.appendChild(option);
+      });
+    }
+
+    function selectCategory(categoryName) {
+      selectedCategory = categoryName;
+      renderCategories();
+      reportCategory.value = categoryName;
+      switchTab('submit');
+      showToast(`${categoryName} selected.`);
+    }
+
+    function switchTab(tabId) {
+      // Remove active from all tabs and panels
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+      // Activate the selected tab and panel
+      const btn = document.getElementById('tab-btn-' + tabId);
+      const panel = document.getElementById('tab-' + tabId);
+      if (btn)   btn.classList.add('active');
+      if (panel) panel.classList.add('active');
+    }
+
+    function renderReports(reportList = reports) {
+      reportsTable.innerHTML = "";
+
+      reportList.forEach((report, index) => {
+        const actualIndex = reports.findIndex((item) => item.id === report.id);
+
+        const row = document.createElement("tr");
+        row.onclick = () => selectReport(actualIndex);
+
+        row.innerHTML = `
+          <td><strong>${report.id}</strong></td>
+          <td>${report.title}</td>
+          <td>${report.category}</td>
+          <td>
+            <span class="priority ${report.priority.toLowerCase()}">${report.priority}</span>
+          </td>
+          <td>
+            <span class="status ${getStatusClass(report.status)}">${report.status}</span>
+          </td>
+          <td>${report.date}</td>
+        `;
+
+        reportsTable.appendChild(row);
+      });
+
+      updateStats();
+    }
+
+    function selectReport(index) {
+      selectedReportIndex = index;
+      const report = reports[index];
+
+      document.getElementById("detailId").textContent = report.id;
+      document.getElementById("detailTitle").textContent = report.title;
+      document.getElementById("detailDescription").textContent = report.description;
+      document.getElementById("detailCategory").textContent = report.category;
+      document.getElementById("detailLocation").textContent = report.location;
+      document.getElementById("detailPriority").textContent = report.priority;
+      document.getElementById("detailStatus").textContent = report.status;
+      document.getElementById("detailSubmittedBy").textContent = report.submittedBy;
+
+      const adminStatusControl = document.getElementById("adminStatusControl");
+      if (window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+        adminStatusControl.style.display = "grid";
+        document.getElementById("statusSelect").value = report.status;
+      } else {
+        adminStatusControl.style.display = "none";
+      }
+
+      const timeline = document.getElementById("timeline");
+      timeline.innerHTML = "";
+
+      report.timeline.forEach((event) => {
+        const div = document.createElement("div");
+        div.className = "timeline-item";
+        div.innerHTML = `
+          <strong>${event.note}</strong>
+          <span>${event.date}</span>
+        `;
+        timeline.appendChild(div);
+      });
+
+      switchTab('details');
+    }
+
+    async function updateReportStatus() {
+      const report = reports[selectedReportIndex];
+      const status = document.getElementById("statusSelect").value;
+      try {
+        reports[selectedReportIndex] = await window.Tit4TatAPI.updateReportStatus(report.id, status);
+      } catch (err) {
+        showToast("Could not update status.");
+        return;
+      }
+      renderReports();
+      selectReport(selectedReportIndex);
+      showToast(`Status updated to ${status}.`);
+    }
+
+    function getStatusClass(status) {
+      if (status === "Submitted") return "submitted";
+      if (status === "Under Review") return "review";
+      if (status === "Resolved") return "resolved";
+      if (status === "Urgent") return "urgent";
+      return "submitted";
+    }
+
+    function updateStats() {
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      set("totalReports",   reports.length);
+      set("underReview",    reports.filter(r => r.status === "Under Review").length);
+      set("resolvedReports",reports.filter(r => r.status === "Resolved").length);
+      set("urgentReports",  reports.filter(r => r.status === "Urgent" || r.priority === "Urgent").length);
+    }
+
+    function fakeUpload() {
+      document.getElementById("uploadText").textContent = "photo_evidence.jpg selected";
+      showToast("Evidence attached.");
+    }
+
+    function filterUrgent() {
+      const urgent = reports.filter(
+        (report) => report.status === "Urgent" || report.priority === "Urgent"
+      );
+
+      renderReports(urgent);
+      showToast("Showing urgent reports only.");
+    }
+
+    function emergencyReport() {
+      window.location.href = "sectd.html";
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+    document.getElementById("reportForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const category = document.getElementById("reportCategory").value;
+      const priority = document.getElementById("priority").value;
+      const title = document.getElementById("title").value;
+      const location = document.getElementById("location").value;
+      const description = document.getElementById("description").value;
+
+      let newReport;
+      try {
+        newReport = await window.Tit4TatAPI.createReport({ title, category, priority, location, description });
+      } catch (err) {
+        showToast("Could not submit report. Please try again.");
+        return;
+      }
+
+      reports.unshift(newReport);
+      selectedReportIndex = 0;
+
+      this.reset();
+      selectedCategory = "";
+      document.getElementById("uploadText").textContent =
+        "No file selected. This is a front-end placeholder.";
+
+      renderCategories();
+      renderReports();
+      switchTab('reports');
+
+      showToast("Report submitted successfully.");
+    });
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "reports", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      [categories, reports] = await Promise.all([
+        window.Tit4TatAPI.getReportCategories(),
+        window.Tit4TatAPI.getReports()
+      ]);
+
+      renderCategories();
+      renderReports();
+    })();
+  </script>
+</body>
+</html>

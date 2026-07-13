@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Community Directory</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only directory-page-specific rules are defined here. */
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .summary-card small {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .summary-card h3 {
+      font-size: 1.8rem;
+      margin: 8px 0 6px;
+    }
+
+    .summary-card p {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    /* PROFILE DIALOG */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 8, 47, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .call-modal {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* FILTERS */
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 220px 160px;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    /* MEMBERS */
+
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .member-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #fff;
+      padding: 16px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .member-card:hover,
+    .member-card.active {
+      border-color: var(--accent);
+      background: #fbf8ff;
+      box-shadow: 0 8px 18px rgba(124, 58, 237, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .member-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .member-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      font-size: 1.05rem;
+      flex-shrink: 0;
+    }
+
+    .member-top h4 {
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+
+    .member-top span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge.verified {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .badge.specialty {
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .badge.business {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .badge.essential {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .member-card p {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .member-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .member-actions .btn {
+      padding: 9px 12px;
+      font-size: 0.82rem;
+    }
+
+    /* PAGINATION */
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .pagination span {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.86rem;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* PROFILE PANEL */
+
+    .profile-hero {
+      border-radius: 20px;
+      padding: 22px;
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(45, 11, 95, 0.94), rgba(124, 58, 237, 0.88)),
+        radial-gradient(circle at top right, rgba(255,255,255,0.25), transparent 40%);
+      margin-bottom: 18px;
+    }
+
+    .profile-main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .profile-main .member-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+    }
+
+    .profile-main h3 {
+      font-size: 1.35rem;
+      margin-bottom: 4px;
+    }
+
+    .profile-main span {
+      opacity: 0.82;
+      font-size: 0.9rem;
+    }
+
+    .profile-hero p {
+      line-height: 1.5;
+      opacity: 0.9;
+      font-size: 0.92rem;
+    }
+
+    .contact-box {
+      border-radius: 18px;
+      background: #fbf8ff;
+      border: 1px solid var(--border);
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    .contact-box h4 {
+      margin-bottom: 8px;
+    }
+
+    .contact-box p {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+      margin-bottom: 14px;
+    }
+
+    .contact-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .review-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .review {
+      border-left: 3px solid var(--accent);
+      padding-left: 12px;
+    }
+
+    .review strong {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+
+    .review span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    /* RESPONSIVE (page-specific; shared.css handles app shell breakpoints) */
+
+    @media (max-width: 700px) {
+      .members-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .contact-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .member-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Directory Status</strong>
+        <p>All listed members are verified before being approved into Tit4Tat.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Community Directory</h2>
+            <p>Find verified members, local businesses, and community specialties.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="notification" role="img" aria-label="Notifications: 2 unread">
+            🔔
+            <span>2</span>
+          </div>
+
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Alex Johnson</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Summary -->
+      <section class="summary-grid">
+        <div class="summary-card">
+          <small>Total Members</small>
+          <h3 id="totalMembers">0</h3>
+          <p>Approved community users</p>
+        </div>
+
+        <div class="summary-card">
+          <small>Local Businesses</small>
+          <h3 id="businessCount">0</h3>
+          <p>Services within the community</p>
+        </div>
+
+        <div class="summary-card">
+          <small>Specialties</small>
+          <h3 id="specialtyCount">0</h3>
+          <p>Available skills and support</p>
+        </div>
+
+        <div class="summary-card">
+          <small>Online Now</small>
+          <h3 id="onlineCount">0</h3>
+          <p>Members currently active</p>
+        </div>
+      </section>
+
+      <div>
+        <!-- Directory -->
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h3>Member Directory</h3>
+              <p>Search by name, skill, business, or specialty.</p>
+            </div>
+          </div>
+
+          <div class="filters">
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Search members, businesses, or specialties..."
+              oninput="filterMembers()"
+            />
+
+            <select id="categoryFilter" onchange="filterMembers()">
+              <option value="All">All Categories</option>
+              <option value="General Member">General Member</option>
+              <option value="Local Business">Local Business</option>
+              <option value="Community Leader">Community Leader</option>
+              <option value="Emergency Contact">Emergency Contact</option>
+            </select>
+
+            <select id="statusFilter" onchange="filterMembers()">
+              <option value="All">All Status</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+            </select>
+          </div>
+
+          <div class="members-grid" id="membersGrid"></div>
+
+          <div class="pagination" id="pagination"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Quick-view Profile Dialog: opens when a member is selected from the directory -->
+  <div class="modal-backdrop" id="profileModal">
+    <div class="call-modal" style="width: min(480px, 100%); text-align: left;">
+      <div class="profile-hero" style="margin: 0; border-radius: 0;">
+        <div class="profile-main">
+          <div class="member-avatar" id="profileInitials">SM</div>
+          <div>
+            <h3 id="profileName">Sandra Miller</h3>
+            <span id="profileCategory">Local Business</span>
+          </div>
+        </div>
+
+        <p id="profileBio">Owner of Miller’s Mini Mart and an active Tit4Tat member.</p>
+      </div>
+
+      <div style="padding: 20px;">
+        <div class="badge-row" id="profileBadges"></div>
+
+        <div class="detail-list">
+          <div class="detail-row">
+            <div class="detail-icon">📌</div>
+            <div>
+              <strong>Specialty</strong>
+              <span id="profileSpecialty">Groceries and household supplies</span>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">📍</div>
+            <div>
+              <strong>Location</strong>
+              <span id="profileLocation">Market Lane</span>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">🕘</div>
+            <div>
+              <strong>Availability</strong>
+              <span id="profileAvailability">Mon - Sat, 8:00 AM - 7:00 PM</span>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">🟢</div>
+            <div>
+              <strong>Status</strong>
+              <span id="profileStatus">Online</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 18px;">
+          <button class="btn btn-light" onclick="closeProfileModal()">Close</button>
+          <button class="btn btn-primary" onclick="viewFullProfile()">View Full Profile</button>
+        </div>
+
+        <div class="contact-actions" style="margin-top: 10px;">
+          <button class="btn btn-primary" onclick="messageMember()">💬 Message</button>
+          <button class="btn btn-success" onclick="callMember()">📞 Call</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+    let members = [];
+    let selectedMemberIndex = 0;
+    let visibleMembers = [];
+    let currentPage = 1;
+    const MEMBERS_PER_PAGE = 6;
+
+    const membersGrid = document.getElementById("membersGrid");
+
+    function renderSummary() {
+      document.getElementById("totalMembers").textContent = members.length;
+      document.getElementById("businessCount").textContent =
+        members.filter(member => member.business).length;
+      document.getElementById("specialtyCount").textContent =
+        new Set(members.map(member => member.specialty)).size;
+      document.getElementById("onlineCount").textContent =
+        members.filter(member => member.status === "Online").length;
+    }
+
+    function renderMembers(list = visibleMembers) {
+      membersGrid.innerHTML = "";
+
+      if (list.length === 0) {
+        membersGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: 16px;">
+            No members found.
+          </div>
+        `;
+        renderPagination(0, 1);
+        return;
+      }
+
+      const totalPages = Math.max(1, Math.ceil(list.length / MEMBERS_PER_PAGE));
+      currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+      const start = (currentPage - 1) * MEMBERS_PER_PAGE;
+      const pageItems = list.slice(start, start + MEMBERS_PER_PAGE);
+
+      pageItems.forEach((member) => {
+        const actualIndex = members.findIndex(item => item.name === member.name);
+
+        const card = document.createElement("div");
+        card.className = `member-card ${actualIndex === selectedMemberIndex ? "active" : ""}`;
+        card.onclick = () => selectMember(actualIndex);
+
+        card.innerHTML = `
+          <div class="member-top">
+            <div class="member-avatar">${avatarHtml(member)}</div>
+            <div>
+              <h4>${member.name}</h4>
+              <span>${member.category}</span>
+            </div>
+          </div>
+
+          <div class="badge-row">
+            <span class="badge verified">✅ Verified</span>
+            <span class="badge specialty">${member.specialty}</span>
+            ${member.business ? `<span class="badge business">🏪 ${member.businessName || "Local Business"}</span>` : ""}
+            ${member.essentialWorker ? `<span class="badge essential">🚑 Essential Worker</span>` : ""}
+          </div>
+
+          <p>${member.businessDescription || member.bio}</p>
+
+          <div class="member-actions">
+            <button class="btn btn-primary" onclick="event.stopPropagation(); goToMessageThread(${member.id})">💬 Message</button>
+            <button class="btn btn-outline" onclick="event.stopPropagation(); goToFullProfile(${member.id})">View Profile</button>
+          </div>
+        `;
+
+        membersGrid.appendChild(card);
+      });
+
+      renderPagination(list.length, totalPages);
+    }
+
+    function avatarHtml(member) {
+      if (member.avatarUrl) {
+        return `<img src="${member.avatarUrl}" alt="${member.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`;
+      }
+      return member.initials;
+    }
+
+    function renderPagination(totalItems, totalPages) {
+      const el = document.getElementById("pagination");
+
+      if (totalItems === 0) {
+        el.innerHTML = "";
+        return;
+      }
+
+      el.innerHTML = `
+        <button class="btn btn-light" onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? "disabled" : ""}>‹ Prev</button>
+        <span>Page ${currentPage} of ${totalPages}</span>
+        <button class="btn btn-light" onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? "disabled" : ""}>Next ›</button>
+      `;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      renderMembers(visibleMembers);
+    }
+
+    // Selecting a member from the directory (a card) opens a quick-view
+    // dialog rather than an always-visible panel.
+    function selectMember(index) {
+      selectedMemberIndex = index;
+      const member = members[index];
+
+      document.getElementById("profileInitials").innerHTML = avatarHtml(member);
+      document.getElementById("profileName").textContent = member.name;
+      document.getElementById("profileCategory").textContent = member.category;
+      document.getElementById("profileBio").textContent = member.businessDescription || member.bio;
+      document.getElementById("profileSpecialty").textContent = member.specialty;
+      document.getElementById("profileLocation").textContent = member.location;
+      document.getElementById("profileAvailability").textContent = member.availability;
+      document.getElementById("profileStatus").textContent = member.status;
+
+      const profileBadges = document.getElementById("profileBadges");
+      profileBadges.innerHTML = `
+        <span class="badge verified">✅ Verified Member</span>
+        <span class="badge specialty">${member.specialty}</span>
+        ${member.business ? `<span class="badge business">🏪 ${member.businessName || "Local Business"}</span>` : ""}
+        ${member.essentialWorker ? `<span class="badge essential">🚑 Essential Worker</span>` : ""}
+      `;
+
+      document.getElementById("profileModal").classList.add("show");
+      renderMembers(visibleMembers);
+    }
+
+    function closeProfileModal() {
+      document.getElementById("profileModal").classList.remove("show");
+    }
+
+    function viewFullProfile() {
+      const member = members[selectedMemberIndex];
+      goToFullProfile(member.id);
+    }
+
+    function goToFullProfile(id) {
+      window.location.href = `sectmemberprofile.html?id=${id}`;
+    }
+
+    function filterMembers() {
+      const searchValue = document.getElementById("searchInput").value.toLowerCase();
+      const categoryValue = document.getElementById("categoryFilter").value;
+      const statusValue = document.getElementById("statusFilter").value;
+
+      visibleMembers = members.filter(member => {
+        const matchesSearch =
+          member.name.toLowerCase().includes(searchValue) ||
+          member.category.toLowerCase().includes(searchValue) ||
+          member.specialty.toLowerCase().includes(searchValue) ||
+          member.location.toLowerCase().includes(searchValue);
+
+        const matchesCategory =
+          categoryValue === "All" || member.category === categoryValue;
+
+        const matchesStatus =
+          statusValue === "All" || member.status === statusValue;
+
+        return matchesSearch && matchesCategory && matchesStatus;
+      });
+
+      currentPage = 1;
+      renderMembers(visibleMembers);
+    }
+
+    function messageMember() {
+      const member = members[selectedMemberIndex];
+      goToMessageThread(member.id);
+    }
+
+    function callMember() {
+      const member = members[selectedMemberIndex];
+      window.location.href = `sectd.html?callContact=${member.id}`;
+    }
+
+    function goToMessageThread(id) {
+      window.location.href = `sectmessages.html?contact=${id}`;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "directory", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      members = await window.Tit4TatAPI.getMembers();
+      visibleMembers = [...members];
+      selectedMemberIndex = -1;
+      currentPage = 1;
+
+      renderSummary();
+      renderMembers();
+    })();
+  </script>
+</body>
+</html>
