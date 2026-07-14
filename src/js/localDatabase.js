@@ -43,24 +43,36 @@
 
   function getRoleLabel(role) {
     switch (role) {
-      case "ADMIN":          return "Admin";
-      case "MEMBER":         return "Verified Member";
-      case "REGULAR_MEMBER": return "Community Member";
-      default:               return "Member";
+      case "SUPER_ADMIN":       return "Super Admin";
+      case "ADMIN":             return "Admin";
+      case "MEMBER":            return "Verified Member";
+      case "LOCAL_BUSINESS":    return "Local Business";
+      case "COMMUNITY_LEADER":  return "Community Leader";
+      case "EMERGENCY_CONTACT": return "Emergency Contact";
+      case "REGULAR_MEMBER":    return "Community Member";
+      default:                  return "Member";
     }
   }
 
   function getRoleBadge(role) {
     switch (role) {
-      case "ADMIN":          return { label: "Admin",            color: "#4b168f", bg: "#efe7ff" };
-      case "MEMBER":         return { label: "Verified Member",  color: "#166534", bg: "#dcfce7" };
-      case "REGULAR_MEMBER": return { label: "Community Member", color: "#92400e", bg: "#fef3c7" };
-      default:               return { label: "Member",           color: "#4b168f", bg: "#efe7ff" };
+      case "SUPER_ADMIN":       return { label: "Super Admin",       color: "#991b1b", bg: "#fee2e2" };
+      case "ADMIN":             return { label: "Admin",            color: "#1e3a5f", bg: "#e7edf3" };
+      case "MEMBER":            return { label: "Verified Member",  color: "#166534", bg: "#dcfce7" };
+      case "LOCAL_BUSINESS":    return { label: "Local Business",   color: "#92400e", bg: "#fef3c7" };
+      case "COMMUNITY_LEADER":  return { label: "Community Leader", color: "#1e3a5f", bg: "#e7edf3" };
+      case "EMERGENCY_CONTACT": return { label: "Emergency Contact",color: "#991b1b", bg: "#fee2e2" };
+      case "REGULAR_MEMBER":    return { label: "Community Member", color: "#92400e", bg: "#fef3c7" };
+      default:                  return { label: "Member",           color: "#1e3a5f", bg: "#e7edf3" };
     }
   }
 
   function hasAccess(user, requiredRole) {
-    const roleOrder = { ADMIN: 3, MEMBER: 2, REGULAR_MEMBER: 1 };
+    const roleOrder = {
+      SUPER_ADMIN: 4, ADMIN: 3,
+      MEMBER: 2, LOCAL_BUSINESS: 2, COMMUNITY_LEADER: 2, EMERGENCY_CONTACT: 2,
+      REGULAR_MEMBER: 1,
+    };
     return user && roleOrder[user.role] >= roleOrder[requiredRole];
   }
 
@@ -83,38 +95,42 @@
     const role = user && user.role ? user.role : "REGULAR_MEMBER";
     const items = [];
 
-    if (role === "ADMIN") {
-      // Admin gets its own dashboard (overview + approvals + emergency log) rather
-      // than landing on the member activity dashboard; Reports/Activities/Directory
-      // stay shared views since admin's oversight controls already live on them.
-      items.push({ label: "🏠 Dashboard",      href: "sectadmin.html", key: "dashboard" });
-      items.push({ label: "📝 Reports",        href: "sectb.html",     key: "reports" });
-      items.push({ label: "📅 Activities",     href: "secta.html",     key: "activities" });
-      items.push({ label: "👥 Directory",      href: "sectc.html",     key: "directory" });
-      items.push({ label: "💬 Messages",       href: "sectmessages.html", key: "messages" });
-      items.push({ label: "📢 Announcements",  href: "sectadmin.html", key: "announcements" });
-      items.push({ label: "⚙️ Settings",       href: "sectsettings.html", key: "settings" });
-    } else if (role === "MEMBER") {
-      // Standard verified member access per role spec. Activities doubles as
-      // the dashboard (it has the "My Activity" stats panel), so there's no
-      // separate Dashboard entry.
-      items.push({ label: "📅 Activities",  href: "secta.html", key: "activities" });
-      items.push({ label: "📝 Reports",     href: "sectb.html", key: "reports" });
-      items.push({ label: "👥 Directory",   href: "sectc.html", key: "directory" });
-      items.push({ label: "💬 Messages",    href: "sectmessages.html", key: "messages" });
-      items.push({ label: "☎️ Tap Call",    href: "sectd.html", key: "emergency" });
-      items.push({ label: "🚨 Emergency",   href: "sectd.html", key: "emergency" });
-      items.push({ label: "🏪 My Business", href: "sectbusiness.html", key: "business" });
-      items.push({ label: "👤 Profile",     href: "sectprofile.html", key: "profile" });
+    if (role === "ADMIN" || role === "SUPER_ADMIN") {
+      // Admin and Super Admin share the same nav — Super Admin's extra powers
+      // (managing other Admins) live inside the existing Settings page rather
+      // than a separate section. Admin gets its own dashboard (overview +
+      // approvals + emergency log) rather than landing on the member activity
+      // dashboard; Reports/Activities/Directory stay shared views since
+      // admin's oversight controls already live on them.
+      items.push({ label: "Dashboard",      href: "sectadmin.html", key: "dashboard" });
+      items.push({ label: "Reports",        href: "sectb.html",     key: "reports" });
+      items.push({ label: "Activities",     href: "secta.html",     key: "activities" });
+      items.push({ label: "Directory",      href: "sectc.html",     key: "directory" });
+      items.push({ label: "Messages",       href: "sectmessages.html", key: "messages" });
+      items.push({ label: "Announcements",  href: "sectadmin.html", key: "announcements" });
+      items.push({ label: "Settings",       href: "sectsettings.html", key: "settings" });
+    } else if (role === "MEMBER" || role === "LOCAL_BUSINESS" || role === "COMMUNITY_LEADER" || role === "EMERGENCY_CONTACT") {
+      // Standard verified member access per role spec — Local Business/Community
+      // Leader/Emergency Contact are specializations of the same member tier and
+      // share this nav. Activities doubles as the dashboard (it has the "My
+      // Activity" stats panel), so there's no separate Dashboard entry.
+      items.push({ label: "Activities",  href: "secta.html", key: "activities" });
+      items.push({ label: "Reports",     href: "sectb.html", key: "reports" });
+      items.push({ label: "Directory",   href: "sectc.html", key: "directory" });
+      items.push({ label: "Messages",    href: "sectmessages.html", key: "messages" });
+      items.push({ label: "Tap Call",    href: "sectd.html", key: "emergency" });
+      items.push({ label: "Emergency",   href: "sectd.html", key: "emergency" });
+      items.push({ label: "My Business", href: "sectbusiness.html", key: "business" });
+      items.push({ label: "Profile",     href: "sectprofile.html", key: "profile" });
     } else {
       // Basic verified access (REGULAR_MEMBER) per role spec. Activities
       // doubles as the dashboard here too, so no separate Dashboard entry.
-      items.push({ label: "📅 Activities", href: "secta.html", key: "activities" });
-      items.push({ label: "📝 Reports",    href: "sectb.html", key: "reports" });
-      items.push({ label: "👥 Directory",  href: "sectc.html", key: "directory" });
-      items.push({ label: "💬 Messages",   href: "sectmessages.html", key: "messages" });
-      items.push({ label: "🚨 Emergency",  href: "sectd.html", key: "emergency" });
-      items.push({ label: "👤 Profile",    href: "sectprofile.html", key: "profile" });
+      items.push({ label: "Activities", href: "secta.html", key: "activities" });
+      items.push({ label: "Reports",    href: "sectb.html", key: "reports" });
+      items.push({ label: "Directory",  href: "sectc.html", key: "directory" });
+      items.push({ label: "Messages",   href: "sectmessages.html", key: "messages" });
+      items.push({ label: "Emergency",  href: "sectd.html", key: "emergency" });
+      items.push({ label: "Profile",    href: "sectprofile.html", key: "profile" });
     }
 
     return items.map(item => ({ ...item, active: item.key === currentPage }));
@@ -139,7 +155,7 @@
     const badgeEl = document.getElementById("roleBadge");
     if (badgeEl && user) {
       const b = getRoleBadge(user.role);
-      badgeEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:0.72rem;font-weight:900;background:${b.bg};color:${b.color};">${b.label}</span>`;
+      badgeEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:0.72rem;font-weight:700;background:${b.bg};color:${b.color};">${b.label}</span>`;
     }
 
     // Append sign-out below the nav if a sign-out container exists
@@ -222,7 +238,7 @@
 
     const text = document.createElement("span");
     text.className = "t4t-emergency-banner-message";
-    text.textContent = `${alert.callerName} made an emergency call to ${alert.targetLabel}.`;
+    text.textContent = `${alert.callerName} raised an emergency alert.`;
     body.appendChild(text);
 
     if (alert.callerLocation) {

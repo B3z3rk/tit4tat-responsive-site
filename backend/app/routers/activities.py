@@ -25,7 +25,7 @@ MAX_COVER_BYTES = 5 * 1024 * 1024  # 5MB
 
 
 def _format_date(d) -> str:
-    # cross-platform "Sat, May 24, 2025" without relying on the non-portable %-d/%#d strftime flags
+    # cross-platform "Sun, May 24, 2026" without relying on the non-portable %-d/%#d strftime flags
     return f"{d.strftime('%a, %b')} {d.day}, {d.year}"
 
 

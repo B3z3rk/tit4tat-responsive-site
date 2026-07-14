@@ -54,6 +54,10 @@ class User(Base):
     profile = Column(Text, nullable=True)
     avatar_path = Column(String, nullable=True)
 
+    # TOTP-based MFA, required at login for Admin-tier accounts (ADMIN/SUPER_ADMIN)
+    totp_secret = Column(String, nullable=True)
+    mfa_enabled = Column(Boolean, default=False)
+
     notes = relationship("MemberNote", foreign_keys="MemberNote.user_id", back_populates="user")
 
 
@@ -76,6 +80,35 @@ class Session(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
+
+
+class MfaChallenge(Base):
+    """A short-lived, single-use pending token issued between password
+    verification and TOTP verification during Admin-tier login, so the real
+    session cookie is only ever set after both factors succeed."""
+
+    __tablename__ = "mfa_challenges"
+
+    token = Column(String, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    purpose = Column(String, nullable=False)  # "enroll" | "login"
+    # only set for "enroll" — the not-yet-confirmed secret being set up
+    pending_secret = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+
+
+class AuditLogEntry(Base):
+    __tablename__ = "audit_log"
+
+    id = Column(Integer, primary_key=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_name = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    target_name = Column(String, nullable=True)
+    detail = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Activity(Base):

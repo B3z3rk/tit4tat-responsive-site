@@ -50,10 +50,10 @@ def list_alerts(
     db: DbSession = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Broadcasts calls to Emergency Services only (not member/business/admin tap
-    # calls, which are person-to-person) to the rest of the community — not back
-    # to the caller themselves, who already sees their own call screen — so
-    # everyone is aware when someone nearby needs urgent help.
+    # Broadcasts emergency alerts only (not member/business/admin tap calls, which
+    # are person-to-person calls) to the rest of the community — not back to the
+    # caller themselves, who already sees their own confirmation — so everyone is
+    # aware when someone nearby needs urgent help.
     calls = (
         db.query(models.EmergencyCall)
         .filter(

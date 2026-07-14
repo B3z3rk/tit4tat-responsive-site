@@ -1,7 +1,12 @@
+import secrets
+from datetime import datetime, timedelta
+
+import pyotp
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session as DbSession
 
 from .. import models, schemas
+from ..constants import ADMIN_TIER_ROLES
 from ..database import get_db
 from ..deps import get_current_user
 from ..security import (
@@ -14,6 +19,14 @@ from ..security import (
 )
 
 router = APIRouter(tags=["auth"])
+
+MFA_CHALLENGE_TTL = timedelta(minutes=10)
+
+
+def _issue_session(db: DbSession, response: Response, user: models.User) -> schemas.UserOut:
+    session = create_session(db, user)
+    set_session_cookie(response, session.token, user)
+    return _to_user_out(user)
 
 
 @router.post("/register", response_model=schemas.UserOut, status_code=201)
@@ -47,7 +60,7 @@ def register(payload: schemas.RegisterIn, db: DbSession = Depends(get_db)):
     return _to_user_out(user)
 
 
-@router.post("/login", response_model=schemas.UserOut)
+@router.post("/login")
 def login(payload: schemas.LoginIn, response: Response, db: DbSession = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == payload.email.lower()).first()
     if not user or not verify_password(payload.password, user.password_hash):
@@ -57,9 +70,68 @@ def login(payload: schemas.LoginIn, response: Response, db: DbSession = Depends(
     if user.approval_status != "approved":
         raise HTTPException(status_code=403, detail="Your account is pending admin approval.")
 
-    session = create_session(db, user)
-    set_session_cookie(response, session.token)
-    return _to_user_out(user)
+    # Admin-tier accounts require a second factor. Password-correct isn't
+    # enough on its own to get a session — a pending challenge is issued
+    # instead, and the real session/cookie only appears after the matching
+    # /mfa/verify-* call succeeds.
+    if user.role in ADMIN_TIER_ROLES:
+        if user.mfa_enabled:
+            challenge = models.MfaChallenge(
+                token=secrets.token_urlsafe(24), user_id=user.id, purpose="login",
+                expires_at=datetime.utcnow() + MFA_CHALLENGE_TTL,
+            )
+            db.add(challenge)
+            db.commit()
+            return schemas.MfaChallengeOut(mfaRequired=True, challengeToken=challenge.token)
+
+        # Not yet enrolled — issue a fresh secret and require it to be
+        # confirmed with one valid code before it's ever active.
+        secret = pyotp.random_base32()
+        challenge = models.MfaChallenge(
+            token=secrets.token_urlsafe(24), user_id=user.id, purpose="enroll",
+            pending_secret=secret, expires_at=datetime.utcnow() + MFA_CHALLENGE_TTL,
+        )
+        db.add(challenge)
+        db.commit()
+        otpauth_url = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name="Tit4Tat")
+        return schemas.MfaChallengeOut(
+            mfaSetupRequired=True, challengeToken=challenge.token, secret=secret, otpauthUrl=otpauth_url,
+        )
+
+    return _issue_session(db, response, user)
+
+
+@router.post("/mfa/verify-enroll", response_model=schemas.UserOut)
+def verify_mfa_enroll(payload: schemas.MfaVerifyIn, response: Response, db: DbSession = Depends(get_db)):
+    challenge = db.get(models.MfaChallenge, payload.challengeToken)
+    if not challenge or challenge.purpose != "enroll" or challenge.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="This setup session has expired. Please sign in again.")
+
+    if not pyotp.TOTP(challenge.pending_secret).verify(payload.code, valid_window=1):
+        raise HTTPException(status_code=401, detail="Incorrect authentication code.")
+
+    user = db.get(models.User, challenge.user_id)
+    user.totp_secret = challenge.pending_secret
+    user.mfa_enabled = True
+    db.delete(challenge)
+    db.commit()
+    db.refresh(user)
+    return _issue_session(db, response, user)
+
+
+@router.post("/mfa/verify-login", response_model=schemas.UserOut)
+def verify_mfa_login(payload: schemas.MfaVerifyIn, response: Response, db: DbSession = Depends(get_db)):
+    challenge = db.get(models.MfaChallenge, payload.challengeToken)
+    if not challenge or challenge.purpose != "login" or challenge.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="This sign-in attempt has expired. Please sign in again.")
+
+    user = db.get(models.User, challenge.user_id)
+    if not pyotp.TOTP(user.totp_secret).verify(payload.code, valid_window=1):
+        raise HTTPException(status_code=401, detail="Incorrect authentication code.")
+
+    db.delete(challenge)
+    db.commit()
+    return _issue_session(db, response, user)
 
 
 @router.post("/logout", status_code=204)

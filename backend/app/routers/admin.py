@@ -6,13 +6,36 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session as DbSession
 
 from .. import models, schemas
-from ..constants import ROLE_ORDER
+from ..constants import ADMIN_TIER_ROLES, ROLE_ORDER
 from ..database import get_db
 from ..deps import require_role
 from ..security import hash_password
 from .reports import _to_out as _report_to_out
 
 router = APIRouter(tags=["admin"], dependencies=[Depends(require_role("ADMIN"))])
+
+
+def _assert_can_manage_admin_tier(actor: models.User, *roles: str) -> None:
+    """Only a Super Admin may assign an Admin-tier role, or act on an account
+    that already holds one — a regular Admin cannot create, demote, suspend,
+    or reset the password of another Admin/Super Admin."""
+    if actor.role == "SUPER_ADMIN":
+        return
+    if any(role in ADMIN_TIER_ROLES for role in roles):
+        raise HTTPException(status_code=403, detail="Only a Super Admin can manage Admin-tier accounts")
+
+
+def _log(
+    db: DbSession, actor: models.User, action: str,
+    target: models.User | None = None, detail: str | None = None,
+) -> None:
+    db.add(models.AuditLogEntry(
+        actor_id=actor.id, actor_name=actor.name, action=action,
+        target_user_id=target.id if target else None,
+        target_name=target.name if target else None,
+        detail=detail,
+    ))
+    db.commit()
 
 
 @router.get("/overview", response_model=schemas.AdminOverviewOut)
@@ -87,12 +110,15 @@ def approve_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    _assert_can_manage_admin_tier(admin, payload.role or "REGULAR_MEMBER")
+
     user.approval_status = "approved"
     user.role = payload.role or "REGULAR_MEMBER"
     user.approved_by_id = admin.id
     user.approved_at = datetime.utcnow()
     db.commit()
     db.refresh(user)
+    _log(db, admin, "approve_user", user, detail=f"role={user.role}")
     return schemas.UserOut(
         id=user.id, name=user.name, email=user.email, role=user.role,
         approvalStatus=user.approval_status, profile=user.profile,
@@ -104,6 +130,7 @@ def reject_user(
     user_id: int,
     payload: schemas.RejectIn,
     db: DbSession = Depends(get_db),
+    actor: models.User = Depends(require_role("ADMIN")),
 ):
     user = db.get(models.User, user_id)
     if not user:
@@ -112,6 +139,7 @@ def reject_user(
     user.approval_status = "rejected"
     user.rejection_reason = payload.reason
     db.commit()
+    _log(db, actor, "reject_user", user, detail=payload.reason)
 
 
 @router.get("/users", response_model=list[schemas.AdminUserOut])
@@ -131,10 +159,13 @@ def reset_password(
     user_id: int,
     payload: schemas.ResetPasswordIn,
     db: DbSession = Depends(get_db),
+    actor: models.User = Depends(require_role("ADMIN")),
 ):
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    _assert_can_manage_admin_tier(actor, user.role)
 
     generated = None
     new_password = payload.newPassword
@@ -148,6 +179,7 @@ def reset_password(
     # existing sessions for this user are invalidated so a reset password takes effect immediately
     db.query(models.Session).filter(models.Session.user_id == user_id).delete()
     db.commit()
+    _log(db, actor, "reset_password", user)  # never log the actual password
 
     return schemas.ResetPasswordOut(temporaryPassword=generated)
 
@@ -157,6 +189,7 @@ def change_role(
     user_id: int,
     payload: schemas.RoleChangeIn,
     db: DbSession = Depends(get_db),
+    actor: models.User = Depends(require_role("ADMIN")),
 ):
     if payload.role not in ROLE_ORDER:
         raise HTTPException(status_code=422, detail=f"role must be one of {sorted(ROLE_ORDER)}")
@@ -165,9 +198,13 @@ def change_role(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    _assert_can_manage_admin_tier(actor, user.role, payload.role)
+
+    previous_role = user.role
     user.role = payload.role
     db.commit()
     db.refresh(user)
+    _log(db, actor, "change_role", user, detail=f"{previous_role} -> {user.role}")
     return schemas.UserOut(
         id=user.id, name=user.name, email=user.email, role=user.role,
         approvalStatus=user.approval_status, profile=user.profile,
@@ -178,10 +215,13 @@ def change_role(
 def suspend_user(
     user_id: int,
     db: DbSession = Depends(get_db),
+    actor: models.User = Depends(require_role("ADMIN")),
 ):
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    _assert_can_manage_admin_tier(actor, user.role)
 
     user.approval_status = "suspended"
     db.commit()
@@ -190,6 +230,7 @@ def suspend_user(
     db.query(models.Session).filter(models.Session.user_id == user_id).delete()
     db.commit()
     db.refresh(user)
+    _log(db, actor, "suspend_user", user)
     return schemas.UserOut(
         id=user.id, name=user.name, email=user.email, role=user.role,
         approvalStatus=user.approval_status, profile=user.profile,
@@ -200,15 +241,36 @@ def suspend_user(
 def reactivate_user(
     user_id: int,
     db: DbSession = Depends(get_db),
+    actor: models.User = Depends(require_role("ADMIN")),
 ):
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    _assert_can_manage_admin_tier(actor, user.role)
+
     user.approval_status = "approved"
     db.commit()
     db.refresh(user)
+    _log(db, actor, "reactivate_user", user)
     return schemas.UserOut(
         id=user.id, name=user.name, email=user.email, role=user.role,
         approvalStatus=user.approval_status, profile=user.profile,
     )
+
+
+@router.get("/audit-log", response_model=list[schemas.AuditLogEntryOut])
+def list_audit_log(db: DbSession = Depends(get_db), actor: models.User = Depends(require_role("SUPER_ADMIN"))):
+    entries = (
+        db.query(models.AuditLogEntry)
+        .order_by(models.AuditLogEntry.created_at.desc())
+        .limit(200)
+        .all()
+    )
+    return [
+        schemas.AuditLogEntryOut(
+            id=e.id, actorName=e.actor_name, action=e.action,
+            targetName=e.target_name, detail=e.detail, createdAt=e.created_at,
+        )
+        for e in entries
+    ]

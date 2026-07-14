@@ -21,6 +21,30 @@ class LoginIn(BaseModel):
     password: str
 
 
+class MfaChallengeOut(BaseModel):
+    """Returned by /login in place of UserOut when a second factor is needed —
+    no session cookie is set until the matching /mfa/verify-* call succeeds."""
+    mfaRequired: Optional[bool] = None
+    mfaSetupRequired: Optional[bool] = None
+    challengeToken: str
+    secret: Optional[str] = None       # only present for mfaSetupRequired
+    otpauthUrl: Optional[str] = None   # only present for mfaSetupRequired
+
+
+class MfaVerifyIn(BaseModel):
+    challengeToken: str
+    code: str
+
+
+class AuditLogEntryOut(BaseModel):
+    id: int
+    actorName: str
+    action: str
+    targetName: Optional[str] = None
+    detail: Optional[str] = None
+    createdAt: datetime
+
+
 class ApproveIn(BaseModel):
     role: Optional[str] = None  # defaults to REGULAR_MEMBER server-side if omitted
 

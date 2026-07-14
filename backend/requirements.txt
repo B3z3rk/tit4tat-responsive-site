@@ -4,3 +4,4 @@ sqlalchemy
 pydantic[email]
 bcrypt
 python-multipart
+pyotp

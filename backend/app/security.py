@@ -6,9 +6,17 @@ from fastapi import Response
 from sqlalchemy.orm import Session as DbSession
 
 from . import models
+from .constants import ADMIN_TIER_ROLES
 
 SESSION_COOKIE_NAME = "t4t_session"
 SESSION_TTL = timedelta(days=7)
+# Admin/Super Admin sessions expire much sooner than regular members' —
+# shorter-lived credentials for the highest-privilege accounts.
+ADMIN_SESSION_TTL = timedelta(hours=12)
+
+
+def _session_ttl_for(user: models.User) -> timedelta:
+    return ADMIN_SESSION_TTL if user.role in ADMIN_TIER_ROLES else SESSION_TTL
 
 
 def hash_password(password: str) -> str:
@@ -23,14 +31,14 @@ def create_session(db: DbSession, user: models.User) -> models.Session:
     session = models.Session(
         token=secrets.token_urlsafe(32),
         user_id=user.id,
-        expires_at=datetime.utcnow() + SESSION_TTL,
+        expires_at=datetime.utcnow() + _session_ttl_for(user),
     )
     db.add(session)
     db.commit()
     return session
 
 
-def set_session_cookie(response: Response, token: str) -> None:
+def set_session_cookie(response: Response, token: str, user: models.User) -> None:
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=token,
@@ -38,7 +46,7 @@ def set_session_cookie(response: Response, token: str) -> None:
         samesite="lax",
         secure=False,
         path="/",
-        max_age=int(SESSION_TTL.total_seconds()),
+        max_age=int(_session_ttl_for(user).total_seconds()),
     )
 
 

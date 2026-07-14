@@ -21,11 +21,27 @@ CALL_TARGETS = {
         "text": "You are about to call a verified local business listed in the community directory.",
     },
     "emergency": {
-        "name": "Emergency Services",
-        "initials": "911",
-        "role": "Emergency Contact",
-        "text": "This should be used for urgent safety, medical, fire, or police matters only.",
+        "name": "Community Alert",
+        "initials": "SOS",
+        "role": "Emergency Alert",
+        "text": "This sends an emergency alert with your name to community admins so they can respond quickly. It does not place a call to emergency services — if you're in immediate danger, contact local emergency services directly.",
     },
 }
 
-ROLE_ORDER = {"REGULAR_MEMBER": 1, "MEMBER": 2, "ADMIN": 3}
+ROLE_ORDER = {
+    "REGULAR_MEMBER": 1,
+    "MEMBER": 2,
+    # Specialized member roles — same permission tier as MEMBER (verified
+    # community access), distinguished by role identity rather than ordinal
+    # rank, so they get every base member permission automatically.
+    "LOCAL_BUSINESS": 2,
+    "COMMUNITY_LEADER": 2,
+    "EMERGENCY_CONTACT": 2,
+    "ADMIN": 3,
+    "SUPER_ADMIN": 4,
+}
+
+# Roles that only a Super Admin may assign to someone else or otherwise act on
+# (suspend, reset password, change role) — a regular Admin cannot create,
+# demote, or touch another Admin/Super Admin account.
+ADMIN_TIER_ROLES = {"ADMIN", "SUPER_ADMIN"}

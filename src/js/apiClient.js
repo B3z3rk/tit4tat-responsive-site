@@ -41,6 +41,12 @@
     login(email, password) {
       return request("POST", "/api/auth/login", { email, password });
     },
+    verifyMfaEnroll(challengeToken, code) {
+      return request("POST", "/api/auth/mfa/verify-enroll", { challengeToken, code });
+    },
+    verifyMfaLogin(challengeToken, code) {
+      return request("POST", "/api/auth/mfa/verify-login", { challengeToken, code });
+    },
     register(payload) {
       return request("POST", "/api/auth/register", payload);
     },
@@ -78,6 +84,9 @@
     },
     reactivateUser(id) {
       return request("POST", `/api/admin/users/${id}/reactivate`);
+    },
+    getAuditLog() {
+      return request("GET", "/api/admin/audit-log");
     },
 
     // activities

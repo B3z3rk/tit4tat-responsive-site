@@ -24,6 +24,12 @@ def seed_if_empty(db: DbSession) -> None:
         role="ADMIN", approval_status="approved",
         profile="Manages the platform, verifies users, reviews reports, and oversees community safety.",
     )
+    _mk_user(
+        db, name="Super Admin", email="superadmin@tit4tat.com", password="superadmin123",
+        role="SUPER_ADMIN", approval_status="approved",
+        profile="Platform owner. Full access, plus the only role that can create, demote, suspend, or "
+                "reset the password of other Admin accounts.",
+    )
     member = _mk_user(
         db, name="Maria Lopez", email="member@tit4tat.com", password="member123",
         role="MEMBER", approval_status="approved",
@@ -100,11 +106,20 @@ def seed_if_empty(db: DbSession) -> None:
              notes=["Assisted during food drive deliveries.", "Available mainly on weekends."]),
     ]
 
+    # Directory category -> the matching specialized role (falls back to plain
+    # MEMBER for general members with no specialization).
+    CATEGORY_ROLE = {
+        "Local Business": "LOCAL_BUSINESS",
+        "Community Leader": "COMMUNITY_LEADER",
+        "Emergency Contact": "EMERGENCY_CONTACT",
+    }
+
     directory_users = {}
     for spec in member_specs:
         notes = spec.pop("notes")
+        role = CATEGORY_ROLE.get(spec["category"], "MEMBER")
         u = _mk_user(
-            db, password="welcome123", role="MEMBER", approval_status="approved", **spec,
+            db, password="welcome123", role=role, approval_status="approved", **spec,
         )
         for note_text in notes:
             db.add(models.MemberNote(user_id=u.id, note=note_text, created_by_id=admin.id))
@@ -112,22 +127,22 @@ def seed_if_empty(db: DbSession) -> None:
 
     # --- activities ---
     activities = [
-        dict(title="Clean Up Our Streets", category="Community Clean-Up", event_date=date(2025, 5, 24),
+        dict(title="Clean Up Our Streets", category="Community Clean-Up", event_date=date(2026, 5, 24),
              time_label="8:00 AM - 11:00 AM", location="Central Park", organizer="Tit4Tat Community Team",
              description="Let's work together to keep our community clean, safe, and beautiful.",
              base_participants=32,
              image_url="https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1200&q=80"),
-        dict(title="Future Leaders Talk", category="Youth Mentorship", event_date=date(2025, 5, 25),
+        dict(title="Future Leaders Talk", category="Youth Mentorship", event_date=date(2026, 5, 25),
              time_label="2:00 PM - 4:00 PM", location="Community Center", organizer="Youth Development Group",
              description="A mentorship session for young people focused on leadership, confidence, and career growth.",
              base_participants=18,
              image_url="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80"),
-        dict(title="Green Our Community", category="Tree Planting", event_date=date(2025, 5, 31),
+        dict(title="Green Our Community", category="Tree Planting", event_date=date(2026, 5, 31),
              time_label="9:00 AM - 12:00 PM", location="Riverside Area", organizer="Tit4Tat Green Team",
              description="Join neighbors in planting trees and improving green spaces across the community.",
              base_participants=24,
              image_url="https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?auto=format&fit=crop&w=1200&q=80"),
-        dict(title="Feeding Families", category="Food Drive", event_date=date(2025, 6, 1),
+        dict(title="Feeding Families", category="Food Drive", event_date=date(2026, 6, 1),
              time_label="10:00 AM - 1:00 PM", location="Donation Point", organizer="Community Care Team",
              description="Support families in need by donating food items or volunteering at the distribution point.",
              base_participants=40,
@@ -141,26 +156,26 @@ def seed_if_empty(db: DbSession) -> None:
         dict(id="T4T-RPT-001", title="Broken Streetlight", category="Streetlight", priority="High",
              status="Under Review", location="Pine Avenue, near Lot 12",
              description="Streetlight has been out for several nights and the area is very dark.",
-             created_at=datetime(2025, 5, 21), timeline=[
+             created_at=datetime(2026, 5, 21), timeline=[
                  "Report submitted by member", "Community admin assigned the issue",
                  "Awaiting update from maintenance contact",
              ]),
         dict(id="T4T-RPT-002", title="Garbage not collected", category="Garbage", priority="Medium",
              status="Submitted", location="Market Lane",
              description="Garbage has not been collected for three days and bags are piling up.",
-             created_at=datetime(2025, 5, 22), timeline=[
+             created_at=datetime(2026, 5, 22), timeline=[
                  "Report submitted by member", "Pending admin review",
              ]),
         dict(id="T4T-RPT-003", title="Leaking water line", category="Water Line", priority="Urgent",
              status="Urgent", location="Oak Street entrance",
              description="A water line appears to be leaking heavily near the community entrance.",
-             created_at=datetime(2025, 5, 23), timeline=[
+             created_at=datetime(2026, 5, 23), timeline=[
                  "Urgent report submitted", "Admin notified", "Emergency contact recommended",
              ]),
         dict(id="T4T-RPT-004", title="Pothole near school gate", category="Road Damage", priority="Low",
              status="Resolved", location="School Road",
              description="Pothole was affecting vehicles entering the school road.",
-             created_at=datetime(2025, 5, 18), timeline=[
+             created_at=datetime(2026, 5, 18), timeline=[
                  "Report submitted", "Issue reviewed", "Repair completed", "Report marked as resolved",
              ]),
     ]

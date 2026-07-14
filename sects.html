@@ -5,27 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
 
   <title>Tit4Tat | Welcome</title>
 
   <style>
     :root {
-      --primary: #4b168f;
-      --primary-dark: #2d0b5f;
-      --primary-light: #efe7ff;
-      --accent: #7c3aed;
-      --success: #16a34a;
-      --danger: #dc2626;
-      --warning: #f59e0b;
-      --info: #2563eb;
-      --bg: #f5f3fb;
+      --primary: #1e3a5f;
+      --primary-dark: #14283f;
+      --primary-light: #e7edf3;
+      --accent: #3d6b64;
+      --success: #2f7a4f;
+      --danger: #b3261e;
+      --warning: #b8860b;
+      --info: #3568a0;
+      --bg: #f4f5f7;
       --card: #ffffff;
-      --text: #1f1235;
-      --muted: #6b6478;
-      --border: #e6def2;
-      --shadow: 0 18px 45px rgba(46, 16, 101, 0.14);
-      --radius: 22px;
+      --text: #1c2430;
+      --muted: #5b6472;
+      --border: #dde1e7;
+      --shadow: 0 2px 8px rgba(20, 30, 45, 0.06);
+      --shadow-lg: 0 10px 28px rgba(20, 30, 45, 0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
     }
 
     * {
@@ -37,11 +39,7 @@
 
     body {
       min-height: 100vh;
-      background:
-        radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 38%),
-        radial-gradient(circle at bottom right, rgba(75, 22, 143, 0.18), transparent 42%),
-        radial-gradient(circle at 50% 100%, rgba(245, 158, 11, 0.06), transparent 50%),
-        var(--bg);
+      background: var(--bg);
       color: var(--text);
       display: flex;
       align-items: center;
@@ -52,8 +50,8 @@
     .phone-card {
       width: min(420px, 100%);
       background: var(--card);
-      border-radius: 32px;
-      box-shadow: var(--shadow);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
       overflow: hidden;
       padding: 36px 28px 24px;
       position: relative;
@@ -67,8 +65,8 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 6px;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
+      height: 4px;
+      background: var(--primary);
     }
 
     .screen-stack {
@@ -102,24 +100,21 @@
     .btn {
       border: none;
       padding: 15px 18px;
-      border-radius: 14px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      font-weight: 900;
-      transition: 0.2s ease;
+      font-weight: 600;
+      transition: background 0.18s ease;
       font-size: 0.95rem;
     }
 
     .btn-block { width: 100%; }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
+      background: var(--primary);
       color: white;
-      box-shadow: 0 10px 24px rgba(75, 22, 143, 0.28);
     }
     .btn-primary:hover {
-      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-      transform: translateY(-1px);
-      box-shadow: 0 14px 30px rgba(75, 22, 143, 0.34);
+      background: var(--primary-dark);
     }
 
     .btn-outline {
@@ -133,11 +128,13 @@
       display: block;
       width: 100%;
       background: transparent;
+      border: none;
       color: var(--muted);
-      font-weight: 800;
+      font-weight: 600;
       font-size: 0.88rem;
       padding: 10px;
       text-align: center;
+      cursor: pointer;
     }
     .btn-text:hover { color: var(--primary); }
 
@@ -146,17 +143,17 @@
       color: var(--primary);
       width: 38px;
       height: 38px;
-      border-radius: 12px;
+      border-radius: var(--radius-sm);
       display: grid;
       place-items: center;
       font-size: 1.1rem;
-      font-weight: 900;
+      font-weight: 700;
       margin-bottom: 16px;
       border: none;
       cursor: pointer;
       flex-shrink: 0;
     }
-    .back-arrow:hover { background: #e2d5ff; }
+    .back-arrow:hover { background: #d7e2ec; }
 
     /* ---- Splash ---- */
 
@@ -167,25 +164,17 @@
       margin: 0 auto 24px;
     }
 
-    .splash-img-wrap::before {
-      content: "";
-      position: absolute;
-      inset: -22px;
-      background: radial-gradient(circle, rgba(124, 58, 237, 0.16), transparent 70%);
-      z-index: 0;
-    }
-
     .splash-img {
       position: relative;
       z-index: 1;
       width: 100%;
       display: block;
-      border-radius: 24px;
+      border-radius: var(--radius);
     }
 
     .splash-title {
       font-size: 1.7rem;
-      font-weight: 900;
+      font-weight: 700;
       text-align: center;
       line-height: 1.2;
       margin-bottom: 8px;
@@ -193,10 +182,9 @@
 
     .splash-tagline {
       text-align: center;
-      color: var(--accent);
+      color: var(--muted);
       font-size: 0.94rem;
-      font-weight: 700;
-      font-style: italic;
+      font-weight: 600;
       margin-bottom: 28px;
     }
 
@@ -221,7 +209,7 @@
     .dot.active {
       width: 22px;
       border-radius: 4px;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
+      background: var(--primary);
     }
 
     /* ---- Headings / text ---- */
@@ -256,25 +244,23 @@
       gap: 12px;
       align-items: start;
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: var(--radius-sm);
       padding: 14px;
       background: #fff;
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      transition: box-shadow 0.18s ease;
     }
 
     .requirement-item:hover {
-      box-shadow: 0 10px 22px rgba(75, 22, 143, 0.1);
-      transform: translateY(-1px);
+      box-shadow: var(--shadow);
     }
 
     .requirement-icon {
       width: 46px;
       height: 46px;
-      border-radius: 14px;
+      border-radius: var(--radius-sm);
       display: grid;
       place-items: center;
       font-size: 1.2rem;
-      box-shadow: 0 4px 10px rgba(75, 22, 143, 0.1);
     }
 
     .icon-ref  { background: var(--primary-light); color: var(--accent); }
@@ -302,25 +288,20 @@
     /* ---- Sign in wordmark ---- */
 
     .wordmark {
-      font-size: 2.5rem;
-      font-weight: 900;
-      font-style: italic;
+      font-size: 1.6rem;
+      font-weight: 700;
       text-align: center;
-      letter-spacing: -1px;
+      letter-spacing: -0.3px;
       margin-bottom: 16px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: var(--primary);
+      color: var(--text);
     }
 
     .wordmark-img {
       display: block;
-      width: 300px;
+      width: 260px;
       height: auto;
       margin: 0 auto 10px;
-      border-radius: 20px;
+      border-radius: var(--radius);
     }
 
     /* ---- Form ---- */
@@ -338,13 +319,13 @@
 
     label {
       font-size: 0.84rem;
-      font-weight: 900;
+      font-weight: 700;
     }
 
     input {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 13px;
+      border-radius: var(--radius-sm);
       padding: 13px;
       outline: none;
       color: var(--text);
@@ -354,15 +335,15 @@
     }
 
     input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12);
     }
 
     .forgot-link {
       display: block;
       text-align: right;
       font-size: 0.82rem;
-      font-weight: 800;
+      font-weight: 600;
       color: var(--primary);
       margin-top: -6px;
       cursor: pointer;
@@ -395,7 +376,7 @@
 
     .policy-link {
       color: var(--primary);
-      font-weight: 800;
+      font-weight: 600;
       text-decoration: none;
     }
     .policy-link:hover { text-decoration: underline; }
@@ -435,9 +416,9 @@
       grid-template-columns: 42px 1fr;
       gap: 12px;
       align-items: center;
-      border: 1px dashed var(--accent);
-      background: #fbf8ff;
-      border-radius: 16px;
+      border: 1px dashed var(--border);
+      background: var(--primary-light);
+      border-radius: var(--radius-sm);
       padding: 12px;
       cursor: pointer;
       transition: border-color 0.18s, background 0.18s;
@@ -457,11 +438,10 @@
     .upload-icon {
       width: 42px;
       height: 42px;
-      border-radius: 13px;
+      border-radius: var(--radius-sm);
       display: grid;
       place-items: center;
       font-size: 1.1rem;
-      box-shadow: 0 4px 10px rgba(75, 22, 143, 0.1);
     }
 
     .upload-row-text strong {
@@ -492,7 +472,7 @@
 
     .success-box {
       display: none;
-      border-radius: 18px;
+      border-radius: var(--radius-sm);
       padding: 16px;
       background: #dcfce7;
       color: #166534;
@@ -509,11 +489,11 @@
       position: fixed;
       right: 24px;
       bottom: 24px;
-      background: #14082f;
+      background: var(--text);
       color: white;
       padding: 14px 18px;
-      border-radius: 14px;
-      box-shadow: var(--shadow);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-lg);
       display: none;
       z-index: 50;
       max-width: 320px;
@@ -621,14 +601,6 @@
 
           <a class="forgot-link" onclick="forgotPassword()">Forgot Password?</a>
 
-          <div class="agree-row">
-            <input id="signinAgree" type="checkbox" required />
-            <label for="signinAgree">
-              I agree to the <a class="policy-link" href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
-              and <a class="policy-link" href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.
-            </label>
-          </div>
-
           <button class="btn btn-primary btn-block" type="submit">Sign In</button>
         </form>
 
@@ -637,6 +609,38 @@
         <button class="btn btn-outline btn-block" onclick="goToStep(4)">Register New Account</button>
 
         <div class="success-box" id="successBoxSignin"></div>
+      </section>
+
+      <!-- Screen 5: MFA (Admin-tier accounts only) -->
+      <section class="screen screen-center" id="mfaScreen">
+        <button class="back-arrow" onclick="cancelMfa()" aria-label="Back to sign in">&larr;</button>
+
+        <h2 class="center" id="mfaTitle">Two-Factor Verification</h2>
+        <p class="subtitle center" id="mfaSubtitle">Enter the 6-digit code from your authenticator app.</p>
+
+        <div id="mfaSetupBox" style="display:none; margin-bottom: 18px;">
+          <p class="helper-text">
+            Admin accounts require an authenticator app (Google Authenticator, Authy, or similar).
+            Add a new account using the setup key below, then enter the 6-digit code it shows to finish signing in.
+          </p>
+          <div class="upload-row" style="cursor: default;">
+            <div class="upload-icon icon-ref">&#128273;</div>
+            <div class="upload-row-text">
+              <strong>Setup key</strong>
+              <span id="mfaSecretText" style="word-break: break-all;"></span>
+            </div>
+          </div>
+        </div>
+
+        <form class="form" id="mfaForm" onsubmit="submitMfaCode(event)">
+          <div class="form-group">
+            <label for="mfaCodeInput">6-digit code</label>
+            <input id="mfaCodeInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" required />
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">Verify</button>
+        </form>
+
+        <div class="success-box" id="successBoxMfa"></div>
       </section>
 
       <!-- Screen 4: Register -->
@@ -736,8 +740,11 @@
       1: "splashScreen",
       2: "requirementsScreen",
       3: "signInScreen",
-      4: "registerScreen"
+      4: "registerScreen",
+      5: "mfaScreen"
     };
+
+    let pendingMfa = null; // { challengeToken, mode: "enroll" | "login" }
 
     function goToStep(step) {
       Object.values(STEP_SCREENS).forEach(id => {
@@ -768,9 +775,9 @@
         return;
       }
 
-      let user;
+      let result;
       try {
-        user = await window.Tit4TatDB.authenticateUser(email, password);
+        result = await window.Tit4TatDB.authenticateUser(email, password);
       } catch (err) {
         if (err instanceof window.Tit4TatAPI.ApiError && err.status === 403) {
           showToast("Your account is still pending admin approval.");
@@ -780,12 +787,78 @@
         return;
       }
 
+      if (result.mfaSetupRequired) {
+        pendingMfa = { challengeToken: result.challengeToken, mode: "enroll" };
+        showMfaScreen({ secret: result.secret });
+        return;
+      }
+      if (result.mfaRequired) {
+        pendingMfa = { challengeToken: result.challengeToken, mode: "login" };
+        showMfaScreen({});
+        return;
+      }
+
+      completeSignIn(result);
+    }
+
+    function showMfaScreen({ secret }) {
+      const isEnroll = pendingMfa.mode === "enroll";
+      document.getElementById("mfaTitle").textContent =
+        isEnroll ? "Set Up Two-Factor Authentication" : "Two-Factor Verification";
+      document.getElementById("mfaSubtitle").textContent = isEnroll
+        ? "One more step to secure this Admin account."
+        : "Enter the 6-digit code from your authenticator app.";
+      document.getElementById("mfaSetupBox").style.display = isEnroll ? "block" : "none";
+      if (isEnroll) {
+        document.getElementById("mfaSecretText").textContent = secret;
+      }
+      document.getElementById("mfaCodeInput").value = "";
+      document.getElementById("successBoxMfa").classList.remove("show");
+      goToStep(5);
+    }
+
+    function cancelMfa() {
+      pendingMfa = null;
+      goToStep(3);
+    }
+
+    async function submitMfaCode(event) {
+      event.preventDefault();
+      if (!pendingMfa) {
+        goToStep(3);
+        return;
+      }
+
+      const code = document.getElementById("mfaCodeInput").value.trim();
+      if (!code) {
+        showToast("Enter the 6-digit code from your authenticator app.");
+        return;
+      }
+
+      const verify = pendingMfa.mode === "enroll"
+        ? window.Tit4TatAPI.verifyMfaEnroll
+        : window.Tit4TatAPI.verifyMfaLogin;
+
+      let user;
+      try {
+        user = await verify(pendingMfa.challengeToken, code);
+      } catch (err) {
+        showToast("Incorrect code. Please try again.");
+        return;
+      }
+
+      pendingMfa = null;
+      completeSignIn(user, "successBoxMfa");
+    }
+
+    function completeSignIn(user, successBoxId) {
       showToast("Signed in successfully.");
 
-      const destination = user.role === "ADMIN" ? "sectadmin.html" : "secta.html";
-      const destinationLabel = user.role === "ADMIN" ? "the admin dashboard" : "the activity menu";
+      const isAdminTier = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
+      const destination = isAdminTier ? "sectadmin.html" : "secta.html";
+      const destinationLabel = isAdminTier ? "the admin dashboard" : "the activity menu";
 
-      const successBox = document.getElementById("successBoxSignin");
+      const successBox = document.getElementById(successBoxId || "successBoxSignin");
       successBox.innerHTML = `
         <strong>Sign in successful.</strong><br>
         Welcome back, ${user.name}. You are being taken to ${destinationLabel}.

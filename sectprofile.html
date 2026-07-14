@@ -26,13 +26,13 @@
     .photo-frame {
       width: 140px;
       height: 140px;
-      border-radius: 40px;
+      border-radius: 24px;
       margin: 0 auto 18px;
-      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      background: var(--primary);
       display: grid;
       place-items: center;
       color: white;
-      font-weight: 900;
+      font-weight: 700;
       font-size: 2.6rem;
       overflow: hidden;
     }
@@ -58,7 +58,7 @@
 
     .field label {
       display: block;
-      font-weight: 800;
+      font-weight: 600;
       font-size: 0.88rem;
       margin-bottom: 6px;
     }
@@ -81,16 +81,16 @@
       gap: 16px;
       margin-bottom: 20px;
       padding: 14px 16px;
-      background: #fbf8ff;
+      background: var(--primary-light);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-sm);
     }
 
     .readonly-row div strong {
       display: block;
       font-size: 0.78rem;
       color: var(--muted);
-      font-weight: 800;
+      font-weight: 600;
       margin-bottom: 3px;
     }
 
@@ -383,7 +383,7 @@
         window.location.href = "sects.html";
         return;
       }
-      if (currentUser.role === "ADMIN") {
+      if (window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
         window.location.href = "sectadmin.html";
         return;
       }

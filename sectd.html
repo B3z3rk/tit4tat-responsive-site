@@ -30,7 +30,7 @@
 
     .summary-card small {
       color: var(--muted);
-      font-weight: 800;
+      font-weight: 600;
     }
 
     .summary-card h3 {
@@ -55,12 +55,12 @@
     .member-avatar {
       width: 48px;
       height: 48px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      border-radius: var(--radius-sm);
+      background: var(--primary);
       color: white;
       display: grid;
       place-items: center;
-      font-weight: 900;
+      font-weight: 700;
       flex-shrink: 0;
     }
 
@@ -80,7 +80,7 @@
     .contact-profile .member-avatar {
       width: 84px;
       height: 84px;
-      border-radius: 28px;
+      border-radius: 14px;
       margin: 0 auto 12px;
       font-size: 1.3rem;
     }
@@ -111,7 +111,7 @@
       padding: 6px 9px;
       border-radius: 999px;
       font-size: 0.74rem;
-      font-weight: 900;
+      font-weight: 700;
       white-space: nowrap;
     }
 
@@ -126,8 +126,8 @@
     }
 
     .tap-call-card {
-      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
-      border-radius: 18px;
+      background: var(--primary-dark);
+      border-radius: var(--radius);
       padding: 18px;
       color: white;
       margin-bottom: 18px;
@@ -159,26 +159,25 @@
     .call-option {
       border: 1px solid var(--border);
       background: white;
-      border-radius: 16px;
+      border-radius: var(--radius);
       padding: 14px;
       display: grid;
       grid-template-columns: 42px 1fr auto;
       gap: 12px;
       align-items: center;
       cursor: pointer;
-      transition: 0.2s ease;
+      transition: border-color 0.18s ease, background 0.18s ease;
     }
 
     .call-option:hover {
-      border-color: var(--accent);
-      background: #fbf8ff;
-      transform: translateY(-1px);
+      border-color: var(--primary);
+      background: var(--primary-light);
     }
 
     .call-icon {
       width: 42px;
       height: 42px;
-      border-radius: 14px;
+      border-radius: var(--radius-sm);
       display: grid;
       place-items: center;
       background: var(--primary-light);
@@ -199,7 +198,7 @@
     .emergency-call-box {
       background: #fff1f2;
       border: 1px solid #fecdd3;
-      border-radius: 18px;
+      border-radius: var(--radius);
       padding: 16px;
       margin-top: 18px;
     }
@@ -236,14 +235,14 @@
     .call-modal {
       width: min(420px, 100%);
       background: white;
-      border-radius: 24px;
-      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
       overflow: hidden;
       text-align: center;
     }
 
     .call-modal-header {
-      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      background: var(--primary-dark);
       color: white;
       padding: 28px 20px;
     }
@@ -252,7 +251,7 @@
       margin: 0 auto 14px;
       width: 78px;
       height: 78px;
-      border-radius: 26px;
+      border-radius: 14px;
       background: rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.25);
     }
@@ -290,9 +289,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background:
-        radial-gradient(circle at top, rgba(124, 58, 237, 0.4), transparent 30%),
-        linear-gradient(180deg, #14082f, #2d0b5f);
+      background: var(--primary-dark);
       color: white;
       z-index: 100;
       align-items: center;
@@ -312,7 +309,7 @@
     .call-card .member-avatar {
       width: 120px;
       height: 120px;
-      border-radius: 40px;
+      border-radius: 20px;
       margin: 0 auto 20px;
       background: rgba(255, 255, 255, 0.18);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -337,7 +334,7 @@
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.13);
       margin-bottom: 30px;
-      font-weight: 800;
+      font-weight: 600;
     }
 
     .pulse {
@@ -424,7 +421,7 @@
 
       <div class="sidebar-footer">
         <strong>Emergency Support</strong>
-        <p>Tap call a member, business, admin, or emergency services when quick contact is needed.</p>
+        <p>Tap call a member, business, or admin — or send an emergency alert when quick help is needed.</p>
       </div>
 
       <div class="sidebar-signout" id="sidebarSignout"></div>
@@ -438,7 +435,7 @@
           <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
           <div class="page-title">
             <h2>Tap Call &amp; Emergency</h2>
-            <p>Access emergency contacts, place urgent calls, and reach support quickly.</p>
+            <p>Access emergency contacts, place urgent calls, and send emergency alerts quickly.</p>
           </div>
         </div>
 
@@ -552,12 +549,14 @@
           </div>
 
           <div class="emergency-call-box">
-            <h4>Emergency Call</h4>
+            <h4>Emergency Alert</h4>
             <p>
-              For urgent safety, medical, fire, or police matters, use the emergency call option.
+              For urgent safety concerns, send an emergency alert to notify community admins
+              immediately with your name. This does not place a call to emergency services —
+              for immediate danger, contact local emergency services directly.
             </p>
             <button class="btn btn-danger" style="width: 100%;" onclick="openCallModal('emergency')">
-              🚨 Call Emergency Services
+              🚨 Send Emergency Alert
             </button>
           </div>
         </aside>
@@ -581,7 +580,7 @@
 
         <div class="modal-actions">
           <button class="btn btn-light" onclick="closeCallModal()">Cancel</button>
-          <button class="btn btn-success" onclick="startCall()">Start Call</button>
+          <button class="btn btn-success" id="modalConfirmBtn" onclick="startCall()">Start Call</button>
         </div>
       </div>
     </div>
@@ -682,6 +681,7 @@
       document.getElementById("modalName").textContent = selectedCallTarget.name;
       document.getElementById("modalRole").textContent = selectedCallTarget.role;
       document.getElementById("modalText").textContent = selectedCallTarget.text;
+      document.getElementById("modalConfirmBtn").textContent = type === "emergency" ? "Send Alert" : "Start Call";
 
       document.getElementById("callModal").classList.add("show");
     }
@@ -695,11 +695,17 @@
 
       closeCallModal();
 
+      // Emergency is an alert, not a call — no ringing/connected screen, since
+      // no call is actually placed to emergency services.
+      if (selectedCallType === "emergency") {
+        await sendEmergencyAlert();
+        return;
+      }
+
       document.getElementById("activeCallInitials").textContent = selectedCallTarget.initials;
       document.getElementById("activeCallName").textContent = selectedCallTarget.name;
       document.getElementById("activeCallRole").textContent = selectedCallTarget.role;
-      document.getElementById("activeCallStatus").textContent =
-        selectedCallTarget.role === "Emergency Contact" ? "Connecting emergency call..." : "Calling...";
+      document.getElementById("activeCallStatus").textContent = "Calling...";
 
       document.getElementById("callScreen").classList.add("show");
 
@@ -714,6 +720,15 @@
           document.getElementById("activeCallStatus").textContent = "Connected";
         }
       }, 1800);
+    }
+
+    async function sendEmergencyAlert() {
+      try {
+        await window.Tit4TatAPI.logEmergencyCall("emergency", selectedCallTarget.name);
+        showToast("Emergency alert sent. Community admins have been notified.");
+      } catch (err) {
+        showToast("Could not send the emergency alert. Please try again.");
+      }
     }
 
     function endCall() {

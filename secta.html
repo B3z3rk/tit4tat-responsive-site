@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -40,7 +40,7 @@
       padding: 18px;
     }
 
-    .stat-card small { color: var(--muted); font-weight: 800; }
+    .stat-card small { color: var(--muted); font-weight: 600; }
     .stat-card h3 { font-size: 1.7rem; margin: 8px 0 6px; }
     .stat-card p { color: var(--muted); font-size: 0.82rem; }
 
@@ -50,7 +50,7 @@
       justify-content: space-between;
       gap: 14px;
       flex-wrap: wrap;
-      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      background: var(--primary-dark);
       color: #fff;
       border-radius: var(--radius);
       padding: 18px 20px;
@@ -71,7 +71,7 @@
     /* Phone-style dashboard preview carousels (Activity / Members) —
        only shown via .mobile-only, see shared.css */
     .mobile-welcome p { color: var(--muted); font-size: 0.9rem; }
-    .mobile-welcome h2 { font-size: 1.3rem; font-weight: 900; }
+    .mobile-welcome h2 { font-size: 1.3rem; font-weight: 700; }
 
     .mobile-carousel-header {
       display: flex;
@@ -92,7 +92,7 @@
 
     .mobile-activity-card {
       width: 150px;
-      border-radius: 16px;
+      border-radius: var(--radius-sm);
       overflow: hidden;
       background: #fff;
       border: 1px solid var(--border);
@@ -122,11 +122,11 @@
       height: 54px;
       border-radius: 50%;
       margin: 0 auto 6px;
-      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      background: var(--primary);
       color: #fff;
       display: grid;
       place-items: center;
-      font-weight: 900;
+      font-weight: 700;
       font-size: 0.9rem;
       overflow: hidden;
     }
@@ -154,9 +154,9 @@
     .section-header .btn {
       background: var(--primary);
       color: #fff;
-      font-weight: 800;
+      font-weight: 600;
       padding: 10px 16px;
-      border-radius: 12px;
+      border-radius: var(--radius-sm);
     }
 
     .section-header .btn.btn-outline {
@@ -169,7 +169,7 @@
       padding: 10px 14px;
       margin-bottom: 10px;
       background: var(--primary-light);
-      border-radius: 0 12px 12px 0;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     }
 
     #announcementsList .announcement-item:last-child { margin-bottom: 0; }
@@ -179,7 +179,7 @@
 
     #newActivityModal label {
       display: block;
-      font-weight: 800;
+      font-weight: 600;
       font-size: 0.85rem;
       margin-bottom: 6px;
     }
@@ -192,7 +192,7 @@
     /* Featured Activity Banner */
     .featured-activity {
       min-height: 260px;
-      border-radius: 20px;
+      border-radius: var(--radius);
       overflow: hidden;
       position: relative;
       background:
@@ -214,14 +214,14 @@
       background: rgba(255, 255, 255, 0.18);
       color: #fff;
       font-size: 0.76rem;
-      font-weight: 800;
+      font-weight: 600;
       margin-bottom: 10px;
       backdrop-filter: blur(6px);
     }
 
     .featured-activity h3 {
       font-size: 1.55rem;
-      font-weight: 900;
+      font-weight: 700;
       margin-bottom: 8px;
     }
 
@@ -255,21 +255,20 @@
       border: 1px solid var(--border);
       background: #fff;
       padding: 12px;
-      border-radius: 16px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
     }
 
     .activity-item:hover,
     .activity-item.active {
-      border-color: var(--accent);
-      box-shadow: 0 6px 18px rgba(124, 58, 237, 0.12);
-      transform: translateY(-1px);
+      border-color: var(--primary);
+      box-shadow: var(--shadow);
     }
 
     .activity-thumb {
       height: 80px;
-      border-radius: 12px;
+      border-radius: var(--radius-sm);
       background-color: var(--primary-light);
       background-size: cover;
       background-position: center;
@@ -282,7 +281,7 @@
       padding: 5px 10px;
       border-radius: 999px;
       font-size: 0.74rem;
-      font-weight: 900;
+      font-weight: 700;
       white-space: nowrap;
     }
 
@@ -292,14 +291,14 @@
     /* Right Detail Panel */
     .details-image {
       height: 180px;
-      border-radius: 16px;
+      border-radius: var(--radius-sm);
       background-size: cover;
       background-position: center;
       margin-bottom: 16px;
     }
 
     .details-title { margin-bottom: 10px; }
-    .details-title h3 { font-size: 1.25rem; font-weight: 900; margin-bottom: 6px; }
+    .details-title h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 6px; }
     .details-title p  { color: var(--muted); line-height: 1.5; font-size: 0.9rem; }
 
     .details-list { display: grid; gap: 12px; margin: 16px 0; }
@@ -313,11 +312,11 @@
       border-radius: 50%;
       border: 2px solid #fff;
       margin-left: -8px;
-      background: linear-gradient(135deg, #f59e0b, #7c3aed);
+      background: var(--primary);
       display: grid;
       place-items: center;
       color: #fff;
-      font-weight: 900;
+      font-weight: 700;
       font-size: 0.74rem;
     }
 
@@ -333,9 +332,9 @@
     /* Reminder card */
     .reminder-card {
       margin-top: 18px;
-      background: #14082f;
+      background: var(--text);
       color: #fff;
-      border-radius: 18px;
+      border-radius: var(--radius);
       padding: 16px 18px;
       display: grid;
       gap: 7px;
@@ -348,6 +347,95 @@
     /* My Activities */
     .my-activities { margin-top: 22px; }
 
+    .my-activities-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .my-activities-list { min-width: 0; }
+
+    /* Mini calendar */
+    .mini-calendar {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px 16px 16px;
+    }
+
+    .mini-cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+
+    .mini-cal-nav {
+      background: var(--primary-light);
+      color: var(--primary);
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      line-height: 1;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .mini-cal-nav:hover { background: #d7e2ec; }
+
+    .mini-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .mini-cal-weekday {
+      text-align: center;
+      font-size: 0.66rem;
+      font-weight: 600;
+      color: var(--muted);
+      padding-bottom: 4px;
+    }
+
+    .mini-cal-day {
+      position: relative;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      color: var(--text);
+    }
+
+    .mini-cal-day.empty { visibility: hidden; }
+
+    .mini-cal-day.today {
+      border: 1px solid var(--primary);
+      font-weight: 700;
+    }
+
+    .mini-cal-day.has-activity {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mini-cal-day.has-activity:hover { background: #d7e2ec; }
+
+    .mini-cal-dot {
+      position: absolute;
+      bottom: 3px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
     .mini-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -357,7 +445,7 @@
     .mini-card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius-sm);
       padding: 16px;
       box-shadow: var(--shadow);
       transition: box-shadow 0.18s;
@@ -373,7 +461,7 @@
       text-align: center;
       color: var(--muted);
       border: 1px dashed var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius-sm);
       font-size: 0.9rem;
     }
 
@@ -382,11 +470,17 @@
       .mini-grid    { grid-template-columns: repeat(2, 1fr); }
     }
 
+    @media (max-width: 900px) {
+      .my-activities-layout { grid-template-columns: 1fr; }
+      .mini-calendar { order: -1; max-width: 340px; }
+    }
+
     @media (max-width: 640px) {
       .activity-item { grid-template-columns: 86px 1fr; }
       .activity-item .status { grid-column: 2; width: fit-content; }
       .featured-activity { min-height: 300px; }
       .mini-grid { grid-template-columns: 1fr; }
+      .mini-calendar { max-width: none; }
     }
 
     /* ---- ACTIVITY DETAILS MODAL ---- */
@@ -413,17 +507,17 @@
       max-height: 90dvh;
       max-height: 90vh;
       background: #fff;
-      border-radius: 24px;
-      box-shadow: 0 30px 80px rgba(15, 5, 35, 0.3);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      animation: modal-enter 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      animation: modal-enter 0.2s ease-out both;
     }
 
     @keyframes modal-enter {
-      from { transform: translateY(24px) scale(0.96); }
-      to   { transform: translateY(0)     scale(1); }
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .modal-hero {
@@ -454,7 +548,7 @@
       backdrop-filter: blur(8px);
       color: #fff;
       font-size: 0.74rem;
-      font-weight: 800;
+      font-weight: 600;
     }
 
     .modal-close {
@@ -489,7 +583,7 @@
 
     .modal-hero-title h2 {
       font-size: 1.45rem;
-      font-weight: 900;
+      font-weight: 700;
       margin-bottom: 4px;
       line-height: 1.2;
     }
@@ -525,9 +619,9 @@
 
     .modal-reminder {
       margin-top: 16px;
-      background: #14082f;
+      background: var(--text);
       color: #fff;
-      border-radius: 16px;
+      border-radius: var(--radius-sm);
       padding: 14px 16px;
       display: grid;
       gap: 6px;
@@ -538,7 +632,7 @@
     .modal-reminder p      { color: rgba(255,255,255,0.7); font-size: 0.82rem; }
 
     @media (max-width: 480px) {
-      .activity-modal { border-radius: 20px 20px 0 0; }
+      .activity-modal { border-radius: var(--radius) var(--radius) 0 0; }
       .modal-backdrop { padding: 0; align-items: flex-end; }
       .modal-actions { grid-template-columns: 1fr; }
     }
@@ -678,7 +772,7 @@
                 <span class="tag">Community Clean-Up</span>
                 <h3>Clean Up Our Streets</h3>
                 <div class="activity-meta">
-                  <span>&#128197; Sat, May 24, 2025</span>
+                  <span>&#128197; Sun, May 24, 2026</span>
                   <span>&#128536; 8:00 AM - 11:00 AM</span>
                   <span>&#128205; Central Park</span>
                 </div>
@@ -708,9 +802,22 @@
               <h3>My Activities</h3>
             </div>
 
-            <div class="mini-grid" id="myActivities"></div>
-            <div class="empty-state" id="emptyState">
-              You have not joined any activities yet.
+            <div class="my-activities-layout">
+              <div class="my-activities-list">
+                <div class="mini-grid" id="myActivities"></div>
+                <div class="empty-state" id="emptyState">
+                  You have not added any activities yet.
+                </div>
+              </div>
+
+              <div class="mini-calendar" id="miniCalendar">
+                <div class="mini-cal-header">
+                  <button type="button" class="mini-cal-nav" onclick="shiftCalendarMonth(-1)" aria-label="Previous month">&lsaquo;</button>
+                  <strong id="miniCalendarLabel"></strong>
+                  <button type="button" class="mini-cal-nav" onclick="shiftCalendarMonth(1)" aria-label="Next month">&rsaquo;</button>
+                </div>
+                <div class="mini-cal-grid" id="miniCalendarGrid"></div>
+              </div>
             </div>
           </section>
         </div>
@@ -736,7 +843,7 @@
         <div class="modal-details-list">
           <div class="detail-row">
             <div class="detail-icon">&#128197;</div>
-            <div><strong>Date</strong><span id="modalDate">Sat, May 24, 2025</span></div>
+            <div><strong>Date</strong><span id="modalDate">Sun, May 24, 2026</span></div>
           </div>
           <div class="detail-row">
             <div class="detail-icon">&#128336;</div>
@@ -763,7 +870,7 @@
 
         <div class="modal-actions">
           <button class="btn btn-primary" id="modalJoinBtn" onclick="joinFromModal()">I'm Going</button>
-          <button class="btn btn-outline" onclick="addToCalendar(); closeModal();">Add to Calendar</button>
+          <button class="btn btn-outline" id="modalCalendarBtn" onclick="addToCalendar()">Add to Calendar</button>
         </div>
 
         <div class="modal-reminder">
@@ -864,7 +971,7 @@
 
       const joinBtn = document.getElementById("modalJoinBtn");
       if (activity.joined) {
-        joinBtn.textContent = "&#10003; You're Going";
+        joinBtn.textContent = "You're Going";
         joinBtn.disabled = true;
         joinBtn.style.opacity = "0.65";
       } else {
@@ -872,6 +979,7 @@
         joinBtn.disabled = false;
         joinBtn.style.opacity = "";
       }
+      updateCalendarButtonState(activity);
 
       openModal();
       renderActivities();
@@ -900,6 +1008,7 @@
       joinBtn.style.opacity = "0.65";
       document.getElementById("modalParticipants").textContent =
         `${activities[selectedActivityIndex].participants} going`;
+      updateCalendarButtonState(activities[selectedActivityIndex]);
     }
 
     function openModal() {
@@ -919,17 +1028,19 @@
     }
 
     function renderMyActivities() {
-      const joined = activities.filter(a => a.joined);
+      renderMiniCalendar();
+
+      const mine = myCalendarActivities();
       myActivitiesEl.innerHTML = "";
 
-      if (joined.length === 0) {
+      if (mine.length === 0) {
         emptyStateEl.style.display = "block";
         return;
       }
 
       emptyStateEl.style.display = "none";
 
-      joined.forEach(activity => {
+      mine.forEach(activity => {
         const card = document.createElement("div");
         card.className = "mini-card";
         card.innerHTML = `
@@ -941,8 +1052,156 @@
       });
     }
 
+    // Parses the display strings the backend sends ("Sun, May 24, 2026" /
+    // "8:00 AM - 11:00 AM") back into real Date objects so activities can be
+    // placed on the in-app mini calendar below.
+    function parseActivityDateTime(activity) {
+      const dateMatch = activity.date.match(/([A-Za-z]{3})\s+(\d{1,2}),\s*(\d{4})/);
+      if (!dateMatch) return null;
+
+      const months = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+      const month = months[dateMatch[1]];
+      const day = parseInt(dateMatch[2], 10);
+      const year = parseInt(dateMatch[3], 10);
+      if (month === undefined || Number.isNaN(day) || Number.isNaN(year)) return null;
+
+      const toHours = (h, ap) => {
+        h = parseInt(h, 10) % 12;
+        return /pm/i.test(ap) ? h + 12 : h;
+      };
+
+      const startMatch = (activity.time || "").match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!startMatch) {
+        return { allDay: true, start: new Date(year, month, day) };
+      }
+
+      const start = new Date(year, month, day, toHours(startMatch[1], startMatch[3]), parseInt(startMatch[2], 10));
+
+      const endMatch = (activity.time || "").match(/-\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      const end = endMatch
+        ? new Date(year, month, day, toHours(endMatch[1], endMatch[3]), parseInt(endMatch[2], 10))
+        : new Date(start.getTime() + 60 * 60 * 1000);
+
+      return { allDay: false, start, end };
+    }
+
+    // ---- In-app "My Activities" calendar (no external calendar app involved) ----
+    // Activities a member explicitly adds are tracked separately from "joined"
+    // activities, per-browser, per-user, so the toggle survives a refresh.
+    let calendarActivityIds = new Set();
+
+    function calendarStorageKey() {
+      return `t4t_calendar_${currentUser.id}`;
+    }
+
+    function loadCalendarIds() {
+      try {
+        const raw = localStorage.getItem(calendarStorageKey());
+        return new Set(raw ? JSON.parse(raw) : []);
+      } catch (err) {
+        return new Set();
+      }
+    }
+
+    function saveCalendarIds() {
+      localStorage.setItem(calendarStorageKey(), JSON.stringify([...calendarActivityIds]));
+    }
+
+    // Activities that should show up in "My Activities": joined, or manually
+    // added to the mini calendar.
+    function myCalendarActivities() {
+      return activities.filter(a => a.joined || calendarActivityIds.has(a.id));
+    }
+
+    function updateCalendarButtonState(activity) {
+      const btn = document.getElementById("modalCalendarBtn");
+      if (!btn) return;
+      const inCalendar = activity.joined || calendarActivityIds.has(activity.id);
+      btn.textContent = inCalendar ? "✓ In My Activities" : "Add to Calendar";
+      btn.disabled = activity.joined;
+      btn.style.opacity = activity.joined ? "0.65" : "";
+    }
+
     function addToCalendar() {
-      showToast(`"${activities[selectedActivityIndex].title}" was added to your calendar.`);
+      const activity = activities[selectedActivityIndex];
+      if (activity.joined) return; // already permanently in My Activities
+
+      const wasAdded = calendarActivityIds.has(activity.id);
+      if (wasAdded) {
+        calendarActivityIds.delete(activity.id);
+      } else {
+        calendarActivityIds.add(activity.id);
+      }
+      saveCalendarIds();
+      updateCalendarButtonState(activity);
+      renderMyActivities();
+
+      showToast(wasAdded
+        ? `Removed "${activity.title}" from My Activities.`
+        : `Added "${activity.title}" to My Activities.`);
+    }
+
+    // ---- Mini calendar widget ----
+    let calendarViewDate = new Date();
+
+    const CAL_WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+    const CAL_MONTHS = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+
+    function initialCalendarViewDate() {
+      const upcoming = myCalendarActivities()
+        .map(parseActivityDateTime)
+        .filter(Boolean)
+        .sort((a, b) => a.start - b.start);
+
+      const base = upcoming.length > 0 ? upcoming[0].start : new Date();
+      return new Date(base.getFullYear(), base.getMonth(), 1);
+    }
+
+    function shiftCalendarMonth(delta) {
+      calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + delta, 1);
+      renderMiniCalendar();
+    }
+
+    function renderMiniCalendar() {
+      const year = calendarViewDate.getFullYear();
+      const month = calendarViewDate.getMonth();
+      const firstWeekday = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+
+      const dayMap = {};
+      myCalendarActivities().forEach(activity => {
+        const parsed = parseActivityDateTime(activity);
+        if (!parsed || parsed.start.getFullYear() !== year || parsed.start.getMonth() !== month) return;
+        const day = parsed.start.getDate();
+        (dayMap[day] = dayMap[day] || []).push(activities.indexOf(activity));
+      });
+
+      document.getElementById("miniCalendarLabel").textContent = `${CAL_MONTHS[month]} ${year}`;
+
+      const cells = CAL_WEEKDAYS.map(d => `<div class="mini-cal-weekday">${d}</div>`);
+
+      for (let i = 0; i < firstWeekday; i++) {
+        cells.push(`<div class="mini-cal-day empty"></div>`);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+        const activityIndex = dayMap[day] ? dayMap[day][0] : null;
+        const classes = ["mini-cal-day"];
+        if (isToday) classes.push("today");
+        if (activityIndex !== null) classes.push("has-activity");
+
+        cells.push(`
+          <div class="${classes.join(" ")}" ${activityIndex !== null ? `onclick="selectActivity(${activityIndex})"` : ""}>
+            <span>${day}</span>
+            ${activityIndex !== null ? '<i class="mini-cal-dot"></i>' : ""}
+          </div>
+        `);
+      }
+
+      document.getElementById("miniCalendarGrid").innerHTML = cells.join("");
     }
 
     function scrollToList() {
@@ -1156,6 +1415,8 @@
         return;
       }
 
+      calendarActivityIds = loadCalendarIds();
+
       window.Tit4TatDB.renderMenu("roleNav", "activities", currentUser);
       window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
       window.Tit4TatDB.startEmergencyAlertPolling();
@@ -1170,13 +1431,14 @@
         // Dashboard analytics + business callout are member/regular-member
         // specific; admins have their own overview dashboard already.
         renderMyStats();
-        if (currentUser.role === "MEMBER") {
+        if (currentUser.role === "MEMBER" || currentUser.role === "LOCAL_BUSINESS") {
           renderBusinessCallout();
         }
       }
 
       renderAnnouncements();
       activities = await window.Tit4TatAPI.getActivities();
+      calendarViewDate = initialCalendarViewDate();
       renderActivities();
       renderMyActivities();
       renderMobileCarousels();
