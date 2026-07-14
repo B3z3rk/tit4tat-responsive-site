@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,7 +13,18 @@ Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
     seed_if_empty(db)
 
-app = FastAPI(title="Tit4Tat API")
+# The interactive docs (/docs, /redoc) and raw schema (/openapi.json) hand
+# anyone who can reach the server a full map of every endpoint and payload
+# shape — disabled unless explicitly opted into for local development via
+# `set ENABLE_API_DOCS=true` (PowerShell) before starting uvicorn.
+DOCS_ENABLED = os.getenv("ENABLE_API_DOCS", "false").lower() == "true"
+
+app = FastAPI(
+    title="Tit4Tat API",
+    docs_url="/docs" if DOCS_ENABLED else None,
+    redoc_url="/redoc" if DOCS_ENABLED else None,
+    openapi_url="/openapi.json" if DOCS_ENABLED else None,
+)
 
 app.include_router(auth.router, prefix="/api/auth")
 app.include_router(admin.router, prefix="/api/admin")
