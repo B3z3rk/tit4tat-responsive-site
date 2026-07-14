@@ -1,8 +1,10 @@
 import secrets
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pyotp
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
+from pydantic import EmailStr
 from sqlalchemy.orm import Session as DbSession
 
 from .. import models, schemas
@@ -22,6 +24,22 @@ router = APIRouter(tags=["auth"])
 
 MFA_CHALLENGE_TTL = timedelta(minutes=10)
 
+# Verification documents live under uploads/verification/{user_id}/ — same
+# repo-root convention as uploads/avatars and uploads/activities, but this
+# specific subpath is blocked from the static mount (see main.py) since these
+# are Super-Admin-only, unlike public avatars/activity covers.
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent.parent
+VERIFICATION_DIR = FRONTEND_DIR / "uploads" / "verification"
+
+ALLOWED_DOC_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "application/pdf": ".pdf",
+}
+MAX_DOC_BYTES = 5 * 1024 * 1024  # 5MB
+
 
 def _issue_session(db: DbSession, response: Response, user: models.User) -> schemas.UserOut:
     session = create_session(db, user)
@@ -29,34 +47,77 @@ def _issue_session(db: DbSession, response: Response, user: models.User) -> sche
     return _to_user_out(user)
 
 
+async def _save_verification_doc(user_id: int, doc_name: str, file: UploadFile | None) -> tuple[bool, str | None]:
+    if not file or not file.filename:
+        return False, None
+
+    ext = ALLOWED_DOC_TYPES.get(file.content_type)
+    if not ext:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type for {doc_name}. Use JPEG, PNG, GIF, WEBP, or PDF.",
+        )
+
+    content = await file.read()
+    if not content:
+        return False, None
+    if len(content) > MAX_DOC_BYTES:
+        raise HTTPException(status_code=400, detail=f"{doc_name} file is too large (max 5MB).")
+
+    user_dir = VERIFICATION_DIR / str(user_id)
+    user_dir.mkdir(parents=True, exist_ok=True)
+    dest = user_dir / f"{doc_name}{ext}"
+    dest.write_bytes(content)
+    return True, str(dest.relative_to(FRONTEND_DIR))
+
+
 @router.post("/register", response_model=schemas.UserOut, status_code=201)
-def register(payload: schemas.RegisterIn, db: DbSession = Depends(get_db)):
-    existing = db.query(models.User).filter(models.User.email == payload.email.lower()).first()
+async def register(
+    db: DbSession = Depends(get_db),
+    name: str = Form(...),
+    email: EmailStr = Form(...),
+    password: str = Form(None),
+    phone: str = Form(None),
+    communityArea: str = Form(None),
+    referenceName: str = Form(None),
+    referenceFile: UploadFile = File(None),
+    idFile: UploadFile = File(None),
+    billFile: UploadFile = File(None),
+):
+    email_normalized = email.lower()
+    existing = db.query(models.User).filter(models.User.email == email_normalized).first()
     if existing:
         raise HTTPException(status_code=409, detail="An account with that email already exists.")
 
     user = models.User(
-        name=payload.name,
-        email=payload.email.lower(),
-        phone=payload.phone,
-        password_hash=hash_password(payload.password or "welcome123"),
+        name=name,
+        email=email_normalized,
+        phone=phone,
+        password_hash=hash_password(password or "welcome123"),
         role="REGULAR_MEMBER",
         approval_status="pending",
-        community_area=payload.communityArea,
-        reference_name=payload.referenceName,
-        reference_uploaded=payload.referenceUploaded,
-        id_uploaded=payload.idUploaded,
-        utility_bill_uploaded=payload.billUploaded,
+        community_area=communityArea,
+        reference_name=referenceName,
         profile="New community member",
         # seed directory fields from what registration already collects, so the
         # member shows up in the directory with something more than blanks
         # the moment an admin approves them
         category="General Member",
-        location=payload.communityArea,
+        location=communityArea,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Documents are optional at this layer (a missing/invalid one just leaves
+    # that requirement unmet, shown to HOA/Super Admin in the approval queue)
+    # rather than blocking account creation outright.
+    user.reference_uploaded, user.reference_path = await _save_verification_doc(user.id, "reference", referenceFile)
+    user.id_uploaded, user.id_path = await _save_verification_doc(user.id, "id", idFile)
+    user.utility_bill_uploaded, user.utility_bill_path = await _save_verification_doc(user.id, "bill", billFile)
+    db.commit()
+    db.refresh(user)
+
     return _to_user_out(user)
 
 

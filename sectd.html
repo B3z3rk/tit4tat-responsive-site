@@ -421,7 +421,7 @@
 
       <div class="sidebar-footer">
         <strong>Emergency Support</strong>
-        <p>Tap call a member, business, or admin — or send an emergency alert when quick help is needed.</p>
+        <p>Tap call a member, business, or HOA — or send an emergency alert when quick help is needed.</p>
       </div>
 
       <div class="sidebar-signout" id="sidebarSignout"></div>
@@ -532,7 +532,7 @@
             <div class="call-option" onclick="openCallModal('admin')">
               <div class="call-icon">🛡️</div>
               <div>
-                <h4>Call Community Admin</h4>
+                <h4>Call HOA</h4>
                 <span>Reach a Tit4Tat community representative</span>
               </div>
               <strong>›</strong>
@@ -551,7 +551,7 @@
           <div class="emergency-call-box">
             <h4>Emergency Alert</h4>
             <p>
-              For urgent safety concerns, send an emergency alert to notify community admins
+              For urgent safety concerns, send an emergency alert to notify the HOA
               immediately with your name. This does not place a call to emergency services —
               for immediate danger, contact local emergency services directly.
             </p>
@@ -725,7 +725,7 @@
     async function sendEmergencyAlert() {
       try {
         await window.Tit4TatAPI.logEmergencyCall("emergency", selectedCallTarget.name);
-        showToast("Emergency alert sent. Community admins have been notified.");
+        showToast("Emergency alert sent. The HOA has been notified.");
       } catch (err) {
         showToast("Could not send the emergency alert. Please try again.");
       }

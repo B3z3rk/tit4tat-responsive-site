@@ -4,18 +4,6 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, EmailStr
 
 
-class RegisterIn(BaseModel):
-    name: str
-    email: EmailStr
-    password: Optional[str] = None
-    phone: Optional[str] = None
-    communityArea: Optional[str] = None
-    referenceName: Optional[str] = None
-    referenceUploaded: bool = False
-    idUploaded: bool = False
-    billUploaded: bool = False
-
-
 class LoginIn(BaseModel):
     email: EmailStr
     password: str

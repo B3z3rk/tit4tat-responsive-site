@@ -26,7 +26,7 @@ def list_announcements(db: DbSession = Depends(get_db), user: models.User = Depe
 def create_announcement(
     payload: schemas.AnnouncementCreateIn,
     db: DbSession = Depends(get_db),
-    admin: models.User = Depends(require_role("ADMIN")),
+    admin: models.User = Depends(require_role("HOA")),
 ):
     announcement = models.Announcement(title=payload.title, body=payload.body, created_by_id=admin.id)
     db.add(announcement)
@@ -39,7 +39,7 @@ def create_announcement(
 def delete_announcement(
     announcement_id: int,
     db: DbSession = Depends(get_db),
-    admin: models.User = Depends(require_role("ADMIN")),
+    admin: models.User = Depends(require_role("HOA")),
 ):
     announcement = db.get(models.Announcement, announcement_id)
     if not announcement:

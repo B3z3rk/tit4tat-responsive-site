@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .database import Base, SessionLocal, engine
@@ -35,6 +36,23 @@ app.include_router(messages.router, prefix="/api/messages")
 app.include_router(emergency.router, prefix="/api/emergency")
 app.include_router(announcements.router, prefix="/api/announcements")
 app.include_router(dashboard.router, prefix="/api/dashboard")
+
+# The static mount below serves the whole repo root (frontend HTML/CSS/JS live
+# flat at the root alongside backend/), so without this guard it would also
+# serve backend/ (source code + the live sqlite db, complete with password
+# hashes and TOTP secrets), .git/ (full history), and uploads/verification/
+# (Super-Admin-only documents) to anyone who requests the path directly.
+# Verification documents must ONLY be reachable through the authenticated,
+# role-gated /api endpoint — never as a static file.
+BLOCKED_STATIC_PREFIXES = ("/backend", "/.git", "/uploads/verification")
+
+
+@app.middleware("http")
+async def block_sensitive_static_paths(request: Request, call_next):
+    if any(request.url.path.startswith(p) for p in BLOCKED_STATIC_PREFIXES):
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    return await call_next(request)
+
 
 # Static frontend mount MUST come after all /api routers above, or this
 # catch-all would 404 every API request before the routers ever see it.

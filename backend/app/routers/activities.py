@@ -98,7 +98,7 @@ def join_activity(activity_id: int, db: DbSession = Depends(get_db), user: model
 def create_activity(
     payload: schemas.ActivityCreateIn,
     db: DbSession = Depends(get_db),
-    admin: models.User = Depends(require_role("ADMIN")),
+    admin: models.User = Depends(require_role("HOA")),
 ):
     activity = models.Activity(
         title=payload.title, category=payload.category, event_date=payload.date,
@@ -117,7 +117,7 @@ async def upload_activity_cover(
     activity_id: int,
     file: UploadFile = File(...),
     db: DbSession = Depends(get_db),
-    admin: models.User = Depends(require_role("ADMIN")),
+    admin: models.User = Depends(require_role("HOA")),
 ):
     activity = db.get(models.Activity, activity_id)
     if not activity:
@@ -154,7 +154,7 @@ async def upload_activity_cover(
 def delete_activity(
     activity_id: int,
     db: DbSession = Depends(get_db),
-    admin: models.User = Depends(require_role("ADMIN")),
+    admin: models.User = Depends(require_role("HOA")),
 ):
     activity = db.get(models.Activity, activity_id)
     if not activity:

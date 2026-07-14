@@ -20,15 +20,15 @@ def seed_if_empty(db: DbSession) -> None:
 
     # --- core demo accounts (unchanged credentials from the old client-only build) ---
     admin = _mk_user(
-        db, name="Admin User", email="admin@tit4tat.com", password="admin123",
-        role="ADMIN", approval_status="approved",
+        db, name="HOA Admin", email="admin@tit4tat.com", password="admin123",
+        role="HOA", approval_status="approved",
         profile="Manages the platform, verifies users, reviews reports, and oversees community safety.",
     )
     _mk_user(
         db, name="Super Admin", email="superadmin@tit4tat.com", password="superadmin123",
         role="SUPER_ADMIN", approval_status="approved",
         profile="Platform owner. Full access, plus the only role that can create, demote, suspend, or "
-                "reset the password of other Admin accounts.",
+                "reset the password of other HOA accounts.",
     )
     member = _mk_user(
         db, name="Maria Lopez", email="member@tit4tat.com", password="member123",
@@ -49,7 +49,7 @@ def seed_if_empty(db: DbSession) -> None:
     # --- named accounts ---
     _mk_user(
         db, name="Gabriella Paisley", email="gabriella.paisley@tit4tat.demo", password="welcome123",
-        role="ADMIN", approval_status="approved",
+        role="HOA", approval_status="approved",
         profile="Manages the platform, verifies users, reviews reports, and oversees community safety.",
     )
     _mk_user(
@@ -170,7 +170,7 @@ def seed_if_empty(db: DbSession) -> None:
              status="Urgent", location="Oak Street entrance",
              description="A water line appears to be leaking heavily near the community entrance.",
              created_at=datetime(2026, 5, 23), timeline=[
-                 "Urgent report submitted", "Admin notified", "Emergency contact recommended",
+                 "Urgent report submitted", "HOA notified", "Emergency contact recommended",
              ]),
         dict(id="T4T-RPT-004", title="Pothole near school gate", category="Road Damage", priority="Low",
              status="Resolved", location="School Road",

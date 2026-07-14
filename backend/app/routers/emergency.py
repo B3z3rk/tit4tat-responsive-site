@@ -32,7 +32,7 @@ def log_call(
     )
 
 
-@router.get("/admin/calls", response_model=list[schemas.EmergencyCallLogOut], dependencies=[Depends(require_role("ADMIN"))])
+@router.get("/admin/calls", response_model=list[schemas.EmergencyCallLogOut], dependencies=[Depends(require_role("HOA"))])
 def list_calls(db: DbSession = Depends(get_db)):
     calls = db.query(models.EmergencyCall).order_by(models.EmergencyCall.created_at.desc()).all()
     return [

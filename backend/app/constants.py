@@ -9,10 +9,10 @@ REPORT_CATEGORIES = [
 
 CALL_TARGETS = {
     "admin": {
-        "name": "Tit4Tat Admin",
-        "initials": "TA",
-        "role": "Community Admin",
-        "text": "You are about to call a Tit4Tat community admin for assistance.",
+        "name": "Tit4Tat HOA",
+        "initials": "HOA",
+        "role": "HOA Representative",
+        "text": "You are about to call a Tit4Tat HOA representative for assistance.",
     },
     "business": {
         "name": "Miller’s Mini Mart",
@@ -37,11 +37,11 @@ ROLE_ORDER = {
     "LOCAL_BUSINESS": 2,
     "COMMUNITY_LEADER": 2,
     "EMERGENCY_CONTACT": 2,
-    "ADMIN": 3,
+    "HOA": 3,
     "SUPER_ADMIN": 4,
 }
 
 # Roles that only a Super Admin may assign to someone else or otherwise act on
-# (suspend, reset password, change role) — a regular Admin cannot create,
-# demote, or touch another Admin/Super Admin account.
-ADMIN_TIER_ROLES = {"ADMIN", "SUPER_ADMIN"}
+# (suspend, reset password, change role) — a regular HOA cannot create,
+# demote, or touch another HOA/Super Admin account.
+ADMIN_TIER_ROLES = {"HOA", "SUPER_ADMIN"}

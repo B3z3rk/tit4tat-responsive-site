@@ -401,7 +401,7 @@
 
       <div class="sidebar-footer">
         <strong>Reporting Status</strong>
-        <p>5 reports are currently being reviewed by community admins.</p>
+        <p>5 reports are currently being reviewed by the HOA.</p>
       </div>
 
       <div class="sidebar-signout" id="sidebarSignout"></div>
@@ -446,7 +446,7 @@
         <div class="stat-card">
           <small>Under Review</small>
           <h3 id="underReview">0</h3>
-          <p>Awaiting admin action</p>
+          <p>Awaiting HOA action</p>
         </div>
 
         <div class="stat-card">
@@ -653,7 +653,7 @@
           <div class="detail-row" id="adminStatusControl" style="display: none; margin-bottom: 18px;">
             <div class="detail-icon">&#9881;&#65039;</div>
             <div>
-              <strong>Admin: Update Status</strong>
+              <strong>HOA: Update Status</strong>
               <div style="display:flex; gap:8px; margin-top:6px;">
                 <select id="statusSelect">
                   <option value="Submitted">Submitted</option>
@@ -787,7 +787,7 @@
       document.getElementById("detailSubmittedBy").textContent = report.submittedBy;
 
       const adminStatusControl = document.getElementById("adminStatusControl");
-      if (window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+      if (window.Tit4TatDB.hasAccess(currentUser, "HOA")) {
         adminStatusControl.style.display = "grid";
         document.getElementById("statusSelect").value = report.status;
       } else {

@@ -83,7 +83,7 @@ def update_status(
     report_id: str,
     payload: schemas.ReportStatusIn,
     db: DbSession = Depends(get_db),
-    admin: models.User = Depends(require_role("ADMIN")),
+    admin: models.User = Depends(require_role("HOA")),
 ):
     if payload.status not in VALID_STATUSES:
         raise HTTPException(status_code=422, detail=f"status must be one of {sorted(VALID_STATUSES)}")

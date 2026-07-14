@@ -11,17 +11,17 @@
   }
 
   async function registerUser(profile) {
-    return api.register({
-      name: profile.name,
-      email: profile.email,
-      password: profile.password,
-      phone: profile.phone,
-      communityArea: profile.communityArea,
-      referenceName: profile.referenceName,
-      referenceUploaded: !!profile.referenceUploaded,
-      idUploaded: !!profile.idUploaded,
-      billUploaded: !!profile.billUploaded
-    });
+    const formData = new FormData();
+    formData.append("name", profile.name);
+    formData.append("email", profile.email);
+    if (profile.password) formData.append("password", profile.password);
+    if (profile.phone) formData.append("phone", profile.phone);
+    if (profile.communityArea) formData.append("communityArea", profile.communityArea);
+    if (profile.referenceName) formData.append("referenceName", profile.referenceName);
+    if (profile.referenceFile) formData.append("referenceFile", profile.referenceFile);
+    if (profile.idFile) formData.append("idFile", profile.idFile);
+    if (profile.billFile) formData.append("billFile", profile.billFile);
+    return api.register(formData);
   }
 
   async function getCurrentUser() {
@@ -44,7 +44,7 @@
   function getRoleLabel(role) {
     switch (role) {
       case "SUPER_ADMIN":       return "Super Admin";
-      case "ADMIN":             return "Admin";
+      case "HOA":               return "HOA";
       case "MEMBER":            return "Verified Member";
       case "LOCAL_BUSINESS":    return "Local Business";
       case "COMMUNITY_LEADER":  return "Community Leader";
@@ -57,7 +57,7 @@
   function getRoleBadge(role) {
     switch (role) {
       case "SUPER_ADMIN":       return { label: "Super Admin",       color: "#991b1b", bg: "#fee2e2" };
-      case "ADMIN":             return { label: "Admin",            color: "#1e3a5f", bg: "#e7edf3" };
+      case "HOA":               return { label: "HOA",               color: "#1e3a5f", bg: "#e7edf3" };
       case "MEMBER":            return { label: "Verified Member",  color: "#166534", bg: "#dcfce7" };
       case "LOCAL_BUSINESS":    return { label: "Local Business",   color: "#92400e", bg: "#fef3c7" };
       case "COMMUNITY_LEADER":  return { label: "Community Leader", color: "#1e3a5f", bg: "#e7edf3" };
@@ -69,7 +69,7 @@
 
   function hasAccess(user, requiredRole) {
     const roleOrder = {
-      SUPER_ADMIN: 4, ADMIN: 3,
+      SUPER_ADMIN: 4, HOA: 3,
       MEMBER: 2, LOCAL_BUSINESS: 2, COMMUNITY_LEADER: 2, EMERGENCY_CONTACT: 2,
       REGULAR_MEMBER: 1,
     };
@@ -95,13 +95,14 @@
     const role = user && user.role ? user.role : "REGULAR_MEMBER";
     const items = [];
 
-    if (role === "ADMIN" || role === "SUPER_ADMIN") {
-      // Admin and Super Admin share the same nav — Super Admin's extra powers
-      // (managing other Admins) live inside the existing Settings page rather
-      // than a separate section. Admin gets its own dashboard (overview +
-      // approvals + emergency log) rather than landing on the member activity
-      // dashboard; Reports/Activities/Directory stay shared views since
-      // admin's oversight controls already live on them.
+    if (role === "HOA" || role === "SUPER_ADMIN") {
+      // HOA and Super Admin share the same nav — Super Admin's extra powers
+      // (managing other HOA accounts, viewing verification documents) live
+      // inside the existing Settings/Dashboard pages rather than a separate
+      // section. HOA gets its own dashboard (overview + approvals + emergency
+      // log) rather than landing on the member activity dashboard;
+      // Reports/Activities/Directory stay shared views since HOA's oversight
+      // controls already live on them.
       items.push({ label: "Dashboard",      href: "sectadmin.html", key: "dashboard" });
       items.push({ label: "Reports",        href: "sectb.html",     key: "reports" });
       items.push({ label: "Activities",     href: "secta.html",     key: "activities" });
@@ -192,9 +193,9 @@
   async function handleMenuAction(action) {
     if (action === "admin") {
       const user = await getCurrentUser();
-      const message = hasAccess(user, "ADMIN")
-        ? "Admin controls are ready for administrators."
-        : "This action requires admin access.";
+      const message = hasAccess(user, "HOA")
+        ? "HOA controls are ready for administrators."
+        : "This action requires HOA access.";
 
       if (window.showToast) {
         window.showToast(message);

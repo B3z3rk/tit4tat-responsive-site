@@ -620,7 +620,7 @@
 
         <div id="mfaSetupBox" style="display:none; margin-bottom: 18px;">
           <p class="helper-text">
-            Admin accounts require an authenticator app (Google Authenticator, Authy, or similar).
+            HOA and Super Admin accounts require an authenticator app (Google Authenticator, Authy, or similar).
             Add a new account using the setup key below, then enter the 6-digit code it shows to finish signing in.
           </p>
           <div class="upload-row" style="cursor: default;">
@@ -680,28 +680,31 @@
             <label>Upload Required Documents</label>
 
             <div class="upload-grid">
-              <div class="upload-row" id="referenceUploadRow" onclick="fakeUpload('referenceUpload')">
+              <div class="upload-row" id="referenceUploadRow" onclick="document.getElementById('referenceFileInput').click()">
                 <div class="upload-icon icon-ref">🧾</div>
                 <div class="upload-row-text">
                   <strong>References</strong>
                   <span id="referenceUpload">Upload references document</span>
                 </div>
+                <input type="file" id="referenceFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" style="display:none;" onchange="handleDocUpload('reference', this.files[0])" />
               </div>
 
-              <div class="upload-row" id="idUploadRow" onclick="fakeUpload('idUpload')">
+              <div class="upload-row" id="idUploadRow" onclick="document.getElementById('idFileInput').click()">
                 <div class="upload-icon icon-id">🪪</div>
                 <div class="upload-row-text">
                   <strong>Valid ID</strong>
                   <span id="idUpload">Upload a clear copy of your ID</span>
                 </div>
+                <input type="file" id="idFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" style="display:none;" onchange="handleDocUpload('id', this.files[0])" />
               </div>
 
-              <div class="upload-row" id="billUploadRow" onclick="fakeUpload('billUpload')">
+              <div class="upload-row" id="billUploadRow" onclick="document.getElementById('billFileInput').click()">
                 <div class="upload-icon icon-bill">📄</div>
                 <div class="upload-row-text">
                   <strong>Utility Bill</strong>
                   <span id="billUpload">Upload recent utility bill</span>
                 </div>
+                <input type="file" id="billFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" style="display:none;" onchange="handleDocUpload('bill', this.files[0])" />
               </div>
             </div>
           </div>
@@ -718,7 +721,7 @@
 
           <p class="helper-text center">
             New users will not receive immediate access. Your request must be reviewed
-            and approved by a Tit4Tat admin.
+            and approved by the Tit4Tat HOA.
           </p>
         </form>
 
@@ -734,7 +737,7 @@
   <script src="src/js/apiClient.js"></script>
   <script src="src/js/localDatabase.js"></script>
   <script>
-    const uploads = { referenceUpload: false, idUpload: false, billUpload: false };
+    const uploads = { reference: null, id: null, bill: null };
 
     const STEP_SCREENS = {
       1: "splashScreen",
@@ -753,15 +756,16 @@
       document.getElementById(STEP_SCREENS[step]).classList.add("active");
     }
 
-    function fakeUpload(elementId) {
-      document.getElementById(elementId).textContent = "File attached";
-      uploads[elementId] = true;
-      document.getElementById(`${elementId}Row`).classList.add("uploaded");
+    function handleDocUpload(key, file) {
+      if (!file) return;
+      uploads[key] = file;
+      document.getElementById(`${key}Upload`).textContent = file.name;
+      document.getElementById(`${key}UploadRow`).classList.add("uploaded");
       showToast("Document attached.");
     }
 
     function forgotPassword() {
-      showToast("Password resets aren't self-service yet — contact your community admin.");
+      showToast("Password resets aren't self-service yet — contact your community's HOA.");
     }
 
     async function signIn(event) {
@@ -780,7 +784,7 @@
         result = await window.Tit4TatDB.authenticateUser(email, password);
       } catch (err) {
         if (err instanceof window.Tit4TatAPI.ApiError && err.status === 403) {
-          showToast("Your account is still pending admin approval.");
+          showToast("Your account is still pending HOA approval.");
         } else {
           showToast("Invalid email or password.");
         }
@@ -806,7 +810,7 @@
       document.getElementById("mfaTitle").textContent =
         isEnroll ? "Set Up Two-Factor Authentication" : "Two-Factor Verification";
       document.getElementById("mfaSubtitle").textContent = isEnroll
-        ? "One more step to secure this Admin account."
+        ? "One more step to secure this account."
         : "Enter the 6-digit code from your authenticator app.";
       document.getElementById("mfaSetupBox").style.display = isEnroll ? "block" : "none";
       if (isEnroll) {
@@ -854,7 +858,7 @@
     function completeSignIn(user, successBoxId) {
       showToast("Signed in successfully.");
 
-      const isAdminTier = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
+      const isAdminTier = user.role === "HOA" || user.role === "SUPER_ADMIN";
       const destination = isAdminTier ? "sectadmin.html" : "secta.html";
       const destinationLabel = isAdminTier ? "the admin dashboard" : "the activity menu";
 
@@ -894,9 +898,9 @@
           password: "welcome123",
           communityArea,
           referenceName,
-          referenceUploaded: uploads.referenceUpload,
-          idUploaded: uploads.idUpload,
-          billUploaded: uploads.billUpload
+          referenceFile: uploads.reference,
+          idFile: uploads.id,
+          billFile: uploads.bill
         });
       } catch (err) {
         successBox.innerHTML = `
@@ -910,7 +914,8 @@
 
       successBox.innerHTML = `
         <strong>Registration request submitted.</strong><br>
-        Thank you, ${name}. Your references, ID, and utility bill will be reviewed by a Tit4Tat admin before access is granted.
+        Thank you, ${name}. Your references, ID, and utility bill will be verified by a Super Admin,
+        and your registration approved by the HOA, before access is granted.
       `;
       successBox.classList.add("show");
 

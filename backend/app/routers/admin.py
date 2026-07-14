@@ -1,7 +1,9 @@
 import secrets
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session as DbSession
 
@@ -12,13 +14,21 @@ from ..deps import require_role
 from ..security import hash_password
 from .reports import _to_out as _report_to_out
 
-router = APIRouter(tags=["admin"], dependencies=[Depends(require_role("ADMIN"))])
+router = APIRouter(tags=["admin"], dependencies=[Depends(require_role("HOA"))])
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent.parent
+
+DOCUMENT_PATH_COLUMNS = {
+    "reference": lambda u: u.reference_path,
+    "id": lambda u: u.id_path,
+    "bill": lambda u: u.utility_bill_path,
+}
 
 
 def _assert_can_manage_admin_tier(actor: models.User, *roles: str) -> None:
     """Only a Super Admin may assign an Admin-tier role, or act on an account
-    that already holds one — a regular Admin cannot create, demote, suspend,
-    or reset the password of another Admin/Super Admin."""
+    that already holds one — a regular HOA cannot create, demote, suspend,
+    or reset the password of another HOA/Super Admin."""
     if actor.role == "SUPER_ADMIN":
         return
     if any(role in ADMIN_TIER_ROLES for role in roles):
@@ -99,12 +109,42 @@ def list_pending(db: DbSession = Depends(get_db)):
     ]
 
 
+@router.get("/users/{user_id}/documents/{doc_type}")
+def view_document(
+    user_id: int,
+    doc_type: str,
+    db: DbSession = Depends(get_db),
+    actor: models.User = Depends(require_role("SUPER_ADMIN")),
+):
+    """Streams a submitted verification document. Super Admin only — this is
+    the ONLY way to reach these files; they're excluded from the static
+    mount (see BLOCKED_STATIC_PREFIXES in main.py)."""
+    getter = DOCUMENT_PATH_COLUMNS.get(doc_type)
+    if not getter:
+        raise HTTPException(status_code=404, detail="Unknown document type")
+
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    relative_path = getter(user)
+    if not relative_path:
+        raise HTTPException(status_code=404, detail="No document on file for this user")
+
+    file_path = FRONTEND_DIR / relative_path
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Document file is missing on disk")
+
+    _log(db, actor, "view_document", user, detail=doc_type)
+    return FileResponse(file_path)
+
+
 @router.post("/users/{user_id}/approve", response_model=schemas.UserOut)
 def approve_user(
     user_id: int,
     payload: schemas.ApproveIn,
     db: DbSession = Depends(get_db),
-    admin: models.User = Depends(require_role("ADMIN")),
+    admin: models.User = Depends(require_role("HOA")),
 ):
     user = db.get(models.User, user_id)
     if not user:
@@ -130,7 +170,7 @@ def reject_user(
     user_id: int,
     payload: schemas.RejectIn,
     db: DbSession = Depends(get_db),
-    actor: models.User = Depends(require_role("ADMIN")),
+    actor: models.User = Depends(require_role("HOA")),
 ):
     user = db.get(models.User, user_id)
     if not user:
@@ -159,7 +199,7 @@ def reset_password(
     user_id: int,
     payload: schemas.ResetPasswordIn,
     db: DbSession = Depends(get_db),
-    actor: models.User = Depends(require_role("ADMIN")),
+    actor: models.User = Depends(require_role("HOA")),
 ):
     user = db.get(models.User, user_id)
     if not user:
@@ -189,7 +229,7 @@ def change_role(
     user_id: int,
     payload: schemas.RoleChangeIn,
     db: DbSession = Depends(get_db),
-    actor: models.User = Depends(require_role("ADMIN")),
+    actor: models.User = Depends(require_role("HOA")),
 ):
     if payload.role not in ROLE_ORDER:
         raise HTTPException(status_code=422, detail=f"role must be one of {sorted(ROLE_ORDER)}")
@@ -215,7 +255,7 @@ def change_role(
 def suspend_user(
     user_id: int,
     db: DbSession = Depends(get_db),
-    actor: models.User = Depends(require_role("ADMIN")),
+    actor: models.User = Depends(require_role("HOA")),
 ):
     user = db.get(models.User, user_id)
     if not user:
@@ -241,7 +281,7 @@ def suspend_user(
 def reactivate_user(
     user_id: int,
     db: DbSession = Depends(get_db),
-    actor: models.User = Depends(require_role("ADMIN")),
+    actor: models.User = Depends(require_role("HOA")),
 ):
     user = db.get(models.User, user_id)
     if not user:

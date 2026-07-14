@@ -64,7 +64,7 @@
     }
 
     .badge.role-super_admin { color: #991b1b; background: #fee2e2; }
-    .badge.role-admin  { color: var(--primary); background: var(--primary-light); }
+    .badge.role-hoa    { color: var(--primary); background: var(--primary-light); }
     .badge.role-member { color: #166534; background: #dcfce7; }
     .badge.role-local_business    { color: #92400e; background: #fef3c7; }
     .badge.role-community_leader  { color: var(--primary); background: var(--primary-light); }
@@ -238,10 +238,10 @@
       const isSuperAdmin = currentUser.role === "SUPER_ADMIN";
 
       el.innerHTML = filtered.map(u => {
-        const isAdminTierTarget = u.role === "ADMIN" || u.role === "SUPER_ADMIN";
+        const isAdminTierTarget = u.role === "HOA" || u.role === "SUPER_ADMIN";
 
         // Only a Super Admin can create, demote, suspend, or reset the
-        // password of an Admin/Super Admin account — a regular Admin sees a
+        // password of an HOA/Super Admin account — a regular HOA sees a
         // read-only note instead of the usual controls for those rows.
         const actions = (isAdminTierTarget && !isSuperAdmin)
           ? `<span class="admin-tier-note">Only a Super Admin can manage this account.</span>`
@@ -252,7 +252,7 @@
               <option value="LOCAL_BUSINESS" ${u.role === "LOCAL_BUSINESS" ? "selected" : ""}>Local Business</option>
               <option value="COMMUNITY_LEADER" ${u.role === "COMMUNITY_LEADER" ? "selected" : ""}>Community Leader</option>
               <option value="EMERGENCY_CONTACT" ${u.role === "EMERGENCY_CONTACT" ? "selected" : ""}>Emergency Contact</option>
-              ${isSuperAdmin ? `<option value="ADMIN" ${u.role === "ADMIN" ? "selected" : ""}>Admin</option>` : ""}
+              ${isSuperAdmin ? `<option value="HOA" ${u.role === "HOA" ? "selected" : ""}>HOA</option>` : ""}
               ${isSuperAdmin ? `<option value="SUPER_ADMIN" ${u.role === "SUPER_ADMIN" ? "selected" : ""}>Super Admin</option>` : ""}
             </select>
             <button class="btn btn-light" onclick="changeRole(${u.id})">Change Role</button>
@@ -399,7 +399,7 @@
         window.location.href = "sects.html";
         return;
       }
-      if (!window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+      if (!window.Tit4TatDB.hasAccess(currentUser, "HOA")) {
         window.location.href = "secta.html";
         return;
       }

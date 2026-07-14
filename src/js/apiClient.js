@@ -31,6 +31,26 @@
     return res.json();
   }
 
+  // Like request(), but sends a FormData body (multipart/form-data) instead
+  // of JSON — used for registration, which includes file uploads. Never set
+  // Content-Type manually here: the browser fills in the multipart boundary.
+  async function requestMultipart(method, path, formData) {
+    const res = await fetch(path, { method, credentials: "same-origin", body: formData });
+
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const errBody = await res.json();
+        detail = errBody.detail || detail;
+      } catch (_) {
+        // no JSON body on this error response
+      }
+      throw new ApiError(res.status, detail);
+    }
+
+    return res.json();
+  }
+
   window.Tit4TatAPI = {
     ApiError,
 
@@ -47,8 +67,8 @@
     verifyMfaLogin(challengeToken, code) {
       return request("POST", "/api/auth/mfa/verify-login", { challengeToken, code });
     },
-    register(payload) {
-      return request("POST", "/api/auth/register", payload);
+    register(formData) {
+      return requestMultipart("POST", "/api/auth/register", formData);
     },
     logout() {
       return request("POST", "/api/auth/logout");

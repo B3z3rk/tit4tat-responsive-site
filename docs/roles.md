@@ -156,7 +156,7 @@ Regular Members cannot access:
 I’d structure it like this:
 
 ```text
-ADMIN
+HOA
 MEMBER
 LOCAL_BUSINESS
 COMMUNITY_LEADER
@@ -166,7 +166,7 @@ EMERGENCY_CONTACT
 But for a simple first version, use only:
 
 ```text
-ADMIN
+HOA
 MEMBER
 ```
 

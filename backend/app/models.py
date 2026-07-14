@@ -24,19 +24,25 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     phone = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
-    role = Column(String, nullable=False, default="REGULAR_MEMBER")  # ADMIN | MEMBER | REGULAR_MEMBER
+    role = Column(String, nullable=False, default="REGULAR_MEMBER")  # HOA | MEMBER | REGULAR_MEMBER
     approval_status = Column(String, nullable=False, default="pending")  # pending | approved | rejected
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # registration requirement placeholders (no real file storage yet)
+    # registration verification documents — path is relative to the repo root
+    # (e.g. "uploads/verification/7/id.jpg"), None if nothing was uploaded.
+    # Only ever served through the Super-Admin-only document endpoint, never
+    # as a static file (see BLOCKED_STATIC_PREFIXES in main.py).
     community_area = Column(String, nullable=True)
     reference_name = Column(String, nullable=True)
     reference_uploaded = Column(Boolean, default=False)
+    reference_path = Column(String, nullable=True)
     id_uploaded = Column(Boolean, default=False)
+    id_path = Column(String, nullable=True)
     utility_bill_uploaded = Column(Boolean, default=False)
+    utility_bill_path = Column(String, nullable=True)
 
     # directory profile fields
     category = Column(String, nullable=True)
@@ -54,7 +60,7 @@ class User(Base):
     profile = Column(Text, nullable=True)
     avatar_path = Column(String, nullable=True)
 
-    # TOTP-based MFA, required at login for Admin-tier accounts (ADMIN/SUPER_ADMIN)
+    # TOTP-based MFA, required at login for Admin-tier accounts (HOA/SUPER_ADMIN)
     totp_secret = Column(String, nullable=True)
     mfa_enabled = Column(Boolean, default=False)
 

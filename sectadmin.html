@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tit4Tat | Admin</title>
+  <title>Tit4Tat | HOA</title>
 
   <link rel="stylesheet" href="src/css/shared.css" />
 
@@ -148,6 +148,7 @@
 
     .badge.uploaded { color: #166534; background: #dcfce7; }
     .badge.missing  { color: #92400e; background: #fef3c7; }
+    .badge.uploaded a { text-decoration: underline; font-weight: 800; }
 
     .approval-actions {
       display: flex;
@@ -197,7 +198,7 @@
       <nav class="nav" id="roleNav"></nav>
 
       <div class="sidebar-footer">
-        <strong>Admin Tools</strong>
+        <strong>HOA Tools</strong>
         <p>Review new members and keep an eye on emergency call activity.</p>
       </div>
 
@@ -209,7 +210,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
           <div class="page-title">
-            <h2>Admin Dashboard</h2>
+            <h2>HOA Dashboard</h2>
             <p>Overview, member approvals, and emergency call activity.</p>
           </div>
         </div>
@@ -218,8 +219,8 @@
           <div class="user-pill">
             <div class="avatar" id="userAvatar">A</div>
             <div>
-              <strong id="userName">Admin User</strong>
-              <small id="userRole">Admin</small>
+              <strong id="userName">HOA Admin</strong>
+              <small id="userRole">HOA</small>
             </div>
           </div>
         </div>
@@ -262,7 +263,7 @@
           <div class="section-header">
             <div>
               <h3>Pending Approvals</h3>
-              <p>New registrations are held here until an admin reviews their references, ID, and utility bill.</p>
+              <p>New registrations are held here until reviewed and approved by the HOA. Verification documents can only be opened by a Super Admin.</p>
             </div>
           </div>
           <div id="pendingList"></div>
@@ -310,6 +311,8 @@
   <script src="src/js/apiClient.js"></script>
   <script src="src/js/localDatabase.js"></script>
   <script>
+    let currentUser = null;
+
     async function renderOverview() {
       const statsEl = document.getElementById("overviewStats");
       const signupsEl = document.getElementById("recentSignups");
@@ -371,10 +374,14 @@
         : `<div class="empty-note">No reports yet.</div>`;
     }
 
-    function uploadBadge(label, uploaded) {
-      return uploaded
-        ? `<span class="badge uploaded">✅ ${label} attached</span>`
-        : `<span class="badge missing">⚠️ ${label} missing</span>`;
+    function uploadBadge(label, uploaded, userId, docType, canView) {
+      if (!uploaded) {
+        return `<span class="badge missing">⚠️ ${label} missing</span>`;
+      }
+      const viewLink = canView
+        ? ` <a href="/api/admin/users/${userId}/documents/${docType}" target="_blank" rel="noopener">View</a>`
+        : "";
+      return `<span class="badge uploaded">✅ ${label} attached${viewLink}</span>`;
     }
 
     async function renderPending() {
@@ -392,6 +399,8 @@
         return;
       }
 
+      const canView = window.Tit4TatDB.hasAccess(currentUser, "SUPER_ADMIN");
+
       pendingList.innerHTML = pending.map(user => `
         <div class="approval-card">
           <div class="approval-top">
@@ -402,9 +411,9 @@
             <span>${user.referenceName ? "Reference: " + user.referenceName : "No reference provided"}</span>
           </div>
           <div class="approval-meta">
-            ${uploadBadge("References", user.referenceUploaded)}
-            ${uploadBadge("Valid ID", user.idUploaded)}
-            ${uploadBadge("Utility bill", user.billUploaded)}
+            ${uploadBadge("References", user.referenceUploaded, user.id, "reference", canView)}
+            ${uploadBadge("Valid ID", user.idUploaded, user.id, "id", canView)}
+            ${uploadBadge("Utility bill", user.billUploaded, user.id, "bill", canView)}
           </div>
           <div class="approval-actions">
             <select id="role-${user.id}">
@@ -544,12 +553,12 @@
     });
 
     (async function init() {
-      const currentUser = await window.Tit4TatDB.getCurrentUser();
+      currentUser = await window.Tit4TatDB.getCurrentUser();
       if (!currentUser) {
         window.location.href = "sects.html";
         return;
       }
-      if (!window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+      if (!window.Tit4TatDB.hasAccess(currentUser, "HOA")) {
         window.location.href = "secta.html";
         return;
       }

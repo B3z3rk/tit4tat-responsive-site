@@ -148,7 +148,7 @@
       padding: 0;
     }
 
-    /* .btn-* buttons (e.g. the admin "+ New Activity" action) keep their real
+    /* .btn-* buttons (e.g. the HOA "+ New Activity" action) keep their real
        button styling even inside a .section-header, overriding the link-like
        default above. */
     .section-header .btn {
@@ -715,7 +715,7 @@
             <div class="h-scroll" id="mobileMembersCarousel"></div>
           </section>
 
-          <!-- My Activity (hidden for admins, who have their own overview dashboard) -->
+          <!-- My Activity (hidden for HOA/Super Admin, who have their own overview dashboard) -->
           <section class="my-stats-grid" id="myStatsSection" style="display: none;">
             <div class="stat-card">
               <small>Activities Joined</small>
@@ -882,7 +882,7 @@
     </div>
   </div>
 
-  <!-- New Activity Modal (admin only) -->
+  <!-- New Activity Modal (HOA/Super Admin only) -->
   <div class="modal-backdrop" id="newActivityModal">
     <div class="activity-modal" style="max-width: 540px;">
       <div class="modal-body">
@@ -1425,11 +1425,11 @@
       document.getElementById("userName").textContent = currentUser.name;
       document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
 
-      if (window.Tit4TatDB.hasAccess(currentUser, "ADMIN")) {
+      if (window.Tit4TatDB.hasAccess(currentUser, "HOA")) {
         document.getElementById("newActivityBtn").style.display = "inline-flex";
       } else {
         // Dashboard analytics + business callout are member/regular-member
-        // specific; admins have their own overview dashboard already.
+        // specific; HOA/Super Admin have their own overview dashboard already.
         renderMyStats();
         if (currentUser.role === "MEMBER" || currentUser.role === "LOCAL_BUSINESS") {
           renderBusinessCallout();
