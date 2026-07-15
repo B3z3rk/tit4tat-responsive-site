@@ -672,8 +672,15 @@
           </div>
 
           <div class="form-group">
-            <label for="referenceName">Reference Name</label>
+            <label for="referenceName">Reference</label>
             <input id="referenceName" type="text" placeholder="Enter reference name" required />
+            <p class="helper-text" id="referenceVerifiedNote" style="display:none; color: var(--success); margin: 2px 0 0;"></p>
+            <button type="button" class="btn btn-outline btn-block" id="scanReferenceBtn" onclick="startQrScan()" style="margin-top: 8px;">
+              📷 Scan Member's QR Code Instead
+            </button>
+            <button type="button" class="btn-text" id="clearScanBtn" onclick="clearScannedReference()" style="display:none;">
+              Enter a different reference / type manually
+            </button>
           </div>
 
           <div class="form-group">
@@ -734,8 +741,17 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- QR scan overlay (registration reference) -->
+  <div id="qrScanOverlay" style="display:none; position:fixed; inset:0; background:rgba(20,8,47,0.9); z-index:999; align-items:center; justify-content:center; flex-direction:column; padding:24px;">
+    <video id="qrVideo" autoplay playsinline muted style="width:min(360px,90vw); border-radius:16px; background:#000;"></video>
+    <canvas id="qrCanvas" style="display:none;"></canvas>
+    <p style="color:#fff; margin-top:16px; font-weight:600; text-align:center;">Point the camera at the member's QR code</p>
+    <button type="button" class="btn btn-light" onclick="cancelQrScan()" style="margin-top:14px;">Cancel</button>
+  </div>
+
   <script src="src/js/apiClient.js"></script>
   <script src="src/js/localDatabase.js"></script>
+  <script src="src/js/jsQR.js"></script>
   <script>
     const uploads = { reference: null, id: null, bill: null };
 
@@ -748,6 +764,101 @@
     };
 
     let pendingMfa = null; // { challengeToken, mode: "enroll" | "login" }
+    let scannedReferenceUserId = null;
+    let qrScanStream = null;
+    let qrScanRAF = null;
+
+    async function startQrScan() {
+      const overlay = document.getElementById("qrScanOverlay");
+      const video = document.getElementById("qrVideo");
+
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      } catch (err) {
+        showToast("Could not access the camera. You can type the reference name manually instead.");
+        return;
+      }
+
+      qrScanStream = stream;
+      video.srcObject = stream;
+      await video.play();
+      overlay.style.display = "flex";
+      qrScanRAF = requestAnimationFrame(scanQrFrame);
+    }
+
+    function scanQrFrame() {
+      const video = document.getElementById("qrVideo");
+      const canvas = document.getElementById("qrCanvas");
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const decoded = jsQR(imageData.data, imageData.width, imageData.height);
+        if (decoded && decoded.data) {
+          stopQrScan();
+          handleQrDecoded(decoded.data);
+          return;
+        }
+      }
+      qrScanRAF = requestAnimationFrame(scanQrFrame);
+    }
+
+    function stopQrScan() {
+      if (qrScanRAF) cancelAnimationFrame(qrScanRAF);
+      qrScanRAF = null;
+      if (qrScanStream) {
+        qrScanStream.getTracks().forEach(track => track.stop());
+        qrScanStream = null;
+      }
+      document.getElementById("qrScanOverlay").style.display = "none";
+    }
+
+    function cancelQrScan() {
+      stopQrScan();
+    }
+
+    async function handleQrDecoded(code) {
+      let result;
+      try {
+        result = await window.Tit4TatAPI.lookupMemberByCode(code);
+      } catch (err) {
+        showToast("That QR code isn't a recognized member. Try again or enter the reference manually.");
+        return;
+      }
+
+      scannedReferenceUserId = result.id;
+
+      const referenceInput = document.getElementById("referenceName");
+      referenceInput.value = result.name;
+      referenceInput.readOnly = true;
+
+      if (result.communityArea) {
+        document.getElementById("communityArea").value = result.communityArea;
+      }
+
+      const note = document.getElementById("referenceVerifiedNote");
+      note.textContent = `✓ Verified reference: ${result.name}`;
+      note.style.display = "block";
+
+      document.getElementById("scanReferenceBtn").style.display = "none";
+      document.getElementById("clearScanBtn").style.display = "block";
+
+      showToast("Reference verified via QR code.");
+    }
+
+    function clearScannedReference() {
+      scannedReferenceUserId = null;
+      const referenceInput = document.getElementById("referenceName");
+      referenceInput.value = "";
+      referenceInput.readOnly = false;
+      document.getElementById("referenceVerifiedNote").style.display = "none";
+      document.getElementById("scanReferenceBtn").style.display = "block";
+      document.getElementById("clearScanBtn").style.display = "none";
+    }
 
     function goToStep(step) {
       Object.values(STEP_SCREENS).forEach(id => {
@@ -898,6 +1009,7 @@
           password: "welcome123",
           communityArea,
           referenceName,
+          referenceUserId: scannedReferenceUserId,
           referenceFile: uploads.reference,
           idFile: uploads.id,
           billFile: uploads.bill
@@ -911,6 +1023,8 @@
         showToast("Email already exists.");
         return;
       }
+
+      clearScannedReference();
 
       successBox.innerHTML = `
         <strong>Registration request submitted.</strong><br>

@@ -3,12 +3,14 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session as DbSession
 
 from . import models
-from .security import hash_password
+from .security import generate_member_code, hash_password
 
 
 def _mk_user(db, **kwargs):
     password = kwargs.pop("password")
-    user = models.User(password_hash=hash_password(password), **kwargs)
+    user = models.User(
+        password_hash=hash_password(password), member_code=generate_member_code(db), **kwargs
+    )
     db.add(user)
     db.flush()
     return user

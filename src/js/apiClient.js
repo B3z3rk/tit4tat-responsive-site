@@ -158,6 +158,11 @@
     updateReportStatus(id, status) {
       return request("PATCH", `/api/reports/${id}/status`, { status });
     },
+    uploadReportMedia(id, file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      return requestMultipart("POST", `/api/reports/${id}/media`, formData);
+    },
 
     // directory
     getMembers() {
@@ -165,6 +170,9 @@
     },
     getMember(id) {
       return request("GET", `/api/members/${id}`);
+    },
+    lookupMemberByCode(code) {
+      return request("GET", `/api/members/lookup-code/${encodeURIComponent(code)}`);
     },
     getMyProfile() {
       return request("GET", "/api/members/me");

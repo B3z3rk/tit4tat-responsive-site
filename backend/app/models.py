@@ -37,6 +37,9 @@ class User(Base):
     # as a static file (see BLOCKED_STATIC_PREFIXES in main.py).
     community_area = Column(String, nullable=True)
     reference_name = Column(String, nullable=True)
+    # set only when the reference was a scanned member QR code (not a manual
+    # typed name) — a real, verified link to an existing approved member
+    reference_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     reference_uploaded = Column(Boolean, default=False)
     reference_path = Column(String, nullable=True)
     id_uploaded = Column(Boolean, default=False)
@@ -59,6 +62,10 @@ class User(Base):
     bio = Column(Text, nullable=True)
     profile = Column(Text, nullable=True)
     avatar_path = Column(String, nullable=True)
+
+    # short unique code shown as a QR on this member's own profile — anyone
+    # can scan it to be vouched for as a reference during registration
+    member_code = Column(String, unique=True, nullable=True)
 
     # TOTP-based MFA, required at login for Admin-tier accounts (HOA/SUPER_ADMIN)
     totp_secret = Column(String, nullable=True)
@@ -158,6 +165,11 @@ class Report(Base):
     submitted_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # optional photo/video evidence — path is public (like avatars/activity
+    # covers), served directly from the static mount, no Super-Admin gate
+    media_path = Column(String, nullable=True)
+    media_type = Column(String, nullable=True)  # "image" | "video"
 
     timeline = relationship(
         "ReportTimelineEvent", back_populates="report", order_by="ReportTimelineEvent.created_at"

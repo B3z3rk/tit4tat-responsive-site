@@ -176,6 +176,17 @@
           </div>
         </section>
 
+        <!-- Reference QR -->
+        <section class="section-card" style="margin-top: 20px; text-align: center;">
+          <div class="section-header" style="justify-content: center; text-align: center;">
+            <div>
+              <h3>My Reference QR Code</h3>
+              <p>Show this to someone registering — scanning it verifies you as their community reference.</p>
+            </div>
+          </div>
+          <div id="referenceQrWrap" style="display: flex; justify-content: center; margin-top: 8px;"></div>
+        </section>
+
         <div>
           <!-- Profile details -->
           <section class="section-card" style="margin-bottom: 20px;">
@@ -261,6 +272,7 @@
 
   <script src="src/js/apiClient.js"></script>
   <script src="src/js/localDatabase.js"></script>
+  <script src="src/js/qrcode-generator.js"></script>
   <script>
     let currentUser = null;
     let myProfile = null;
@@ -269,6 +281,18 @@
       window.Tit4TatDB.renderAvatar("photoFrame", myProfile);
       document.getElementById("photoName").textContent = currentUser.name;
       document.getElementById("photoRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+    }
+
+    function renderReferenceQr() {
+      const wrap = document.getElementById("referenceQrWrap");
+      if (!myProfile.memberCode) {
+        wrap.textContent = "No reference code available yet.";
+        return;
+      }
+      const qr = qrcode(0, "M");
+      qr.addData(myProfile.memberCode);
+      qr.make();
+      wrap.innerHTML = qr.createSvgTag(6, 0);
     }
 
     async function loadProfile() {
@@ -287,6 +311,7 @@
       document.getElementById("availabilityInput").value = myProfile.availability || "";
 
       renderPhoto();
+      renderReferenceQr();
     }
 
     async function uploadAvatar() {

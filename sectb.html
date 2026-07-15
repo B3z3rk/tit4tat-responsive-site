@@ -545,10 +545,11 @@
 
                 <div class="form-group full">
                   <label>Evidence</label>
-                  <div class="upload-box" onclick="fakeUpload()">
-                    <strong>Click to upload photo or video</strong>
-                    <span id="uploadText">No file selected. This is a front-end placeholder.</span>
+                  <div class="upload-box" onclick="document.getElementById('reportMediaInput').click()">
+                    <strong>Take a photo/video, or click to upload</strong>
+                    <span id="uploadText">No file selected — evidence is optional.</span>
                   </div>
+                  <input type="file" id="reportMediaInput" accept="image/*,video/*" capture="environment" style="display:none;" onchange="handleReportMediaSelect(this.files[0])" />
                 </div>
               </div>
 
@@ -606,6 +607,11 @@
             <p id="detailDescription">
               Streetlight has been out for several nights and the area is very dark.
             </p>
+          </div>
+
+          <div id="detailMediaWrap" style="display:none; margin-bottom: 18px;">
+            <img id="detailMediaImg" style="display:none; width:100%; max-height:320px; object-fit:cover; border-radius:var(--radius);" alt="Report evidence" />
+            <video id="detailMediaVideo" style="display:none; width:100%; max-height:320px; border-radius:var(--radius);" controls></video>
           </div>
 
           <div class="detail-list">
@@ -786,6 +792,24 @@
       document.getElementById("detailStatus").textContent = report.status;
       document.getElementById("detailSubmittedBy").textContent = report.submittedBy;
 
+      const mediaWrap = document.getElementById("detailMediaWrap");
+      const mediaImg = document.getElementById("detailMediaImg");
+      const mediaVideo = document.getElementById("detailMediaVideo");
+      mediaImg.style.display = "none";
+      mediaVideo.style.display = "none";
+      mediaVideo.pause();
+      if (report.mediaUrl && report.mediaType === "image") {
+        mediaImg.src = report.mediaUrl;
+        mediaImg.style.display = "block";
+        mediaWrap.style.display = "block";
+      } else if (report.mediaUrl && report.mediaType === "video") {
+        mediaVideo.src = report.mediaUrl;
+        mediaVideo.style.display = "block";
+        mediaWrap.style.display = "block";
+      } else {
+        mediaWrap.style.display = "none";
+      }
+
       const adminStatusControl = document.getElementById("adminStatusControl");
       if (window.Tit4TatDB.hasAccess(currentUser, "HOA")) {
         adminStatusControl.style.display = "grid";
@@ -840,8 +864,12 @@
       set("urgentReports",  reports.filter(r => r.status === "Urgent" || r.priority === "Urgent").length);
     }
 
-    function fakeUpload() {
-      document.getElementById("uploadText").textContent = "photo_evidence.jpg selected";
+    let selectedReportMedia = null;
+
+    function handleReportMediaSelect(file) {
+      if (!file) return;
+      selectedReportMedia = file;
+      document.getElementById("uploadText").textContent = `${file.name} selected`;
       showToast("Evidence attached.");
     }
 
@@ -885,13 +913,21 @@
         return;
       }
 
+      if (selectedReportMedia) {
+        try {
+          newReport = await window.Tit4TatAPI.uploadReportMedia(newReport.id, selectedReportMedia);
+        } catch (err) {
+          showToast("Report submitted, but the evidence file could not be attached.");
+        }
+      }
+
       reports.unshift(newReport);
       selectedReportIndex = 0;
 
       this.reset();
       selectedCategory = "";
-      document.getElementById("uploadText").textContent =
-        "No file selected. This is a front-end placeholder.";
+      selectedReportMedia = null;
+      document.getElementById("uploadText").textContent = "No file selected — evidence is optional.";
 
       renderCategories();
       renderReports();

@@ -61,6 +61,7 @@ class PendingUserOut(BaseModel):
     createdAt: datetime
     communityArea: Optional[str] = None
     referenceName: Optional[str] = None
+    referenceVerified: bool = False
     referenceUploaded: bool
     idUploaded: bool
     billUploaded: bool
@@ -116,6 +117,8 @@ class ReportOut(BaseModel):
     description: str
     submittedBy: str
     timeline: List[TimelineEventOut]
+    mediaUrl: Optional[str] = None
+    mediaType: Optional[str] = None
 
 
 class ReportCreateIn(BaseModel):
@@ -153,6 +156,16 @@ class MemberOut(BaseModel):
     bio: Optional[str] = None
     notes: List[str]
     avatarUrl: Optional[str] = None
+    memberCode: Optional[str] = None
+
+
+class MemberLookupOut(BaseModel):
+    """Minimal public info returned when a registration applicant scans a
+    member's reference QR code — deliberately excludes anything the member
+    isn't already showing by choosing to display their own QR code."""
+    id: int
+    name: str
+    communityArea: Optional[str] = None
 
 
 class MyBusinessUpdateIn(BaseModel):

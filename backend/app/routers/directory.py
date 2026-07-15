@@ -53,6 +53,27 @@ def _to_out(user: models.User) -> schemas.MemberOut:
         bio=user.bio,
         notes=[n.note for n in sorted(user.notes, key=lambda n: n.created_at)],
         avatarUrl=user.avatar_path,
+        memberCode=user.member_code,
+    )
+
+
+@router.get("/lookup-code/{code}", response_model=schemas.MemberLookupOut)
+def lookup_by_code(code: str, db: DbSession = Depends(get_db)):
+    """Deliberately unauthenticated — this backs the registration screen's QR
+    scan, which happens before the applicant has any account. Only returns
+    what a member is already choosing to display by showing their own code."""
+    member = (
+        db.query(models.User)
+        .filter(models.User.member_code == code.strip().upper())
+        .first()
+    )
+    if not member or member.approval_status != "approved":
+        raise HTTPException(status_code=404, detail="No approved member found for this code")
+    # community_area is only ever set at that member's own registration time
+    # (often blank for seeded/demo accounts); location is their up-to-date
+    # directory profile address — prefer whichever is actually populated.
+    return schemas.MemberLookupOut(
+        id=member.id, name=member.name, communityArea=member.location or member.community_area,
     )
 
 

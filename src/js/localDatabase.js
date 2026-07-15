@@ -18,6 +18,7 @@
     if (profile.phone) formData.append("phone", profile.phone);
     if (profile.communityArea) formData.append("communityArea", profile.communityArea);
     if (profile.referenceName) formData.append("referenceName", profile.referenceName);
+    if (profile.referenceUserId) formData.append("referenceUserId", profile.referenceUserId);
     if (profile.referenceFile) formData.append("referenceFile", profile.referenceFile);
     if (profile.idFile) formData.append("idFile", profile.idFile);
     if (profile.billFile) formData.append("billFile", profile.billFile);

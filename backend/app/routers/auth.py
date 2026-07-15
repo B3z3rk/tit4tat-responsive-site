@@ -15,6 +15,7 @@ from ..security import (
     SESSION_COOKIE_NAME,
     clear_session_cookie,
     create_session,
+    generate_member_code,
     hash_password,
     set_session_cookie,
     verify_password,
@@ -80,6 +81,7 @@ async def register(
     phone: str = Form(None),
     communityArea: str = Form(None),
     referenceName: str = Form(None),
+    referenceUserId: int = Form(None),
     referenceFile: UploadFile = File(None),
     idFile: UploadFile = File(None),
     billFile: UploadFile = File(None),
@@ -88,6 +90,16 @@ async def register(
     existing = db.query(models.User).filter(models.User.email == email_normalized).first()
     if existing:
         raise HTTPException(status_code=409, detail="An account with that email already exists.")
+
+    # A scanned QR reference must point at a real, approved member — if it
+    # doesn't, fall back to whatever manual reference name was typed instead
+    # of failing the whole registration outright.
+    reference_user = None
+    if referenceUserId is not None:
+        candidate = db.get(models.User, referenceUserId)
+        if candidate and candidate.approval_status == "approved":
+            reference_user = candidate
+            referenceName = candidate.name
 
     user = models.User(
         name=name,
@@ -98,12 +110,14 @@ async def register(
         approval_status="pending",
         community_area=communityArea,
         reference_name=referenceName,
+        reference_user_id=reference_user.id if reference_user else None,
         profile="New community member",
         # seed directory fields from what registration already collects, so the
         # member shows up in the directory with something more than blanks
         # the moment an admin approves them
         category="General Member",
         location=communityArea,
+        member_code=generate_member_code(db),
     )
     db.add(user)
     db.commit()

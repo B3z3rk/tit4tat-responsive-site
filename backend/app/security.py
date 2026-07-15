@@ -27,6 +27,16 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
+def generate_member_code(db: DbSession) -> str:
+    """Short unique code shown as a QR on a member's own profile, scanned by
+    registration applicants as a verified reference."""
+    for _ in range(5):
+        code = secrets.token_hex(4).upper()
+        if not db.query(models.User).filter(models.User.member_code == code).first():
+            return code
+    raise RuntimeError("Could not generate a unique member code")
+
+
 def create_session(db: DbSession, user: models.User) -> models.Session:
     session = models.Session(
         token=secrets.token_urlsafe(32),

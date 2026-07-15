@@ -102,6 +102,7 @@ def list_pending(db: DbSession = Depends(get_db)):
         schemas.PendingUserOut(
             id=u.id, name=u.name, email=u.email, createdAt=u.created_at,
             communityArea=u.community_area, referenceName=u.reference_name,
+            referenceVerified=u.reference_user_id is not None,
             referenceUploaded=u.reference_uploaded, idUploaded=u.id_uploaded,
             billUploaded=u.utility_bill_uploaded,
         )

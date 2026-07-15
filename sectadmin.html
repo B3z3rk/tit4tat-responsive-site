@@ -408,7 +408,7 @@
               <h4>${user.name}</h4>
               <span>${user.email}${user.communityArea ? " · " + user.communityArea : ""}</span>
             </div>
-            <span>${user.referenceName ? "Reference: " + user.referenceName : "No reference provided"}</span>
+            <span>${user.referenceName ? "Reference: " + user.referenceName + (user.referenceVerified ? " (QR verified ✓)" : " (manual entry)") : "No reference provided"}</span>
           </div>
           <div class="approval-meta">
             ${uploadBadge("References", user.referenceUploaded, user.id, "reference", canView)}
