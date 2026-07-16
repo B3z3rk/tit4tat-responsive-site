@@ -23,6 +23,12 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False, index=True)
     phone = Column(String, nullable=True)
+    # Explicit opt-in for real (Twilio-bridged) tap-to-call, kept separate
+    # from just "has a phone number" - several unrelated test/registration
+    # accounts already have a phone on file, and only accounts we deliberately
+    # flag should ever trigger an actual outbound call. See
+    # telephony_utils.place_bridge_call and routers/emergency.py.
+    real_call_enabled = Column(Boolean, default=False)
     password_hash = Column(String, nullable=False)
     # set whenever HOA/Super Admin assigns a password the member didn't choose
     # themselves (approval, admin-triggered reset) — forces a change on next
@@ -229,6 +235,9 @@ class EmergencyCall(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     target_type = Column(String, nullable=False)
     target_label = Column(String, nullable=False)
+    # only set for "member" calls - lets the backend look up the target's
+    # phone number to place a real bridge call (see routers/emergency.py)
+    target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", foreign_keys=[user_id])

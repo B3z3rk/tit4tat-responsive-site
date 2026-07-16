@@ -31,6 +31,8 @@ def get_db():
 # without touching existing rows.
 _NEW_COLUMNS = [
     ("users", "mfa_required", "BOOLEAN DEFAULT 0"),
+    ("users", "real_call_enabled", "BOOLEAN DEFAULT 0"),
+    ("emergency_calls", "target_user_id", "INTEGER"),
 ]
 
 

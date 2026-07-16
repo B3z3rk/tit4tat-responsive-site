@@ -233,8 +233,8 @@
     getEmergencyTargets() {
       return request("GET", "/api/emergency/targets");
     },
-    logEmergencyCall(targetType, targetLabel) {
-      return request("POST", "/api/emergency/calls", { targetType, targetLabel });
+    logEmergencyCall(targetType, targetLabel, targetUserId) {
+      return request("POST", "/api/emergency/calls", { targetType, targetLabel, targetUserId: targetUserId || null });
     },
     getEmergencyLogs() {
       return request("GET", "/api/emergency/admin/calls");

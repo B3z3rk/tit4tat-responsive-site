@@ -5,6 +5,7 @@ from .. import models, schemas
 from ..constants import CALL_TARGETS
 from ..database import get_db
 from ..deps import get_current_user, require_role
+from ..telephony_utils import place_bridge_call
 
 router = APIRouter(tags=["emergency"])
 
@@ -20,8 +21,22 @@ def log_call(
     db: DbSession = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
+    # A real bridge call only ever happens between two accounts that have
+    # BOTH explicitly opted in (real_call_enabled) AND have a phone number on
+    # file - having a phone number alone isn't enough, since unrelated test
+    # registrations may already have one stored.
+    call_placed = False
+    target = db.get(models.User, payload.targetUserId) if payload.targetUserId else None
+    if (
+        target
+        and user.real_call_enabled and target.real_call_enabled
+        and user.phone and target.phone
+    ):
+        call_placed = place_bridge_call(user.phone, target.phone)
+
     call = models.EmergencyCall(
         user_id=user.id, target_type=payload.targetType, target_label=payload.targetLabel,
+        target_user_id=target.id if target else None,
     )
     db.add(call)
     db.commit()
@@ -29,6 +44,7 @@ def log_call(
     return schemas.EmergencyCallLogOut(
         id=call.id, callerName=user.name, targetType=call.target_type,
         targetLabel=call.target_label, createdAt=call.created_at,
+        callPlaced=call_placed,
     )
 
 

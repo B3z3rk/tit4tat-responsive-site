@@ -88,6 +88,35 @@ credentials never end up in source control — if you'd rather not use a file, s
 the same names as real environment variables (`$env:SMTP_HOST = "..."`) before running
 `start-server.ps1` works too and takes the same effect.
 
+### Real phone calls (Twilio)
+
+Tap-to-call (`sectd.html`) is a simulated UI for everyone by default — no real phone
+is ever dialed. For a specific pair of accounts that both have `real_call_enabled=True`
+*and* a real phone number on file, calling between them places a genuine bridged phone
+call instead: Twilio rings the caller's real phone, and once answered, connects the
+callee's real phone to it.
+
+`real_call_enabled` is a deliberate opt-in kept separate from just having a phone
+number on file — plenty of test/registration accounts already have one, and only
+accounts explicitly flagged should ever trigger a real outbound call. It's not exposed
+in any UI yet; set it directly in the database for the specific accounts you want it on.
+
+To enable real calls, add to `.env`:
+
+```ini
+TWILIO_ACCOUNT_SID=your-account-sid
+TWILIO_AUTH_TOKEN=your-auth-token
+TWILIO_FROM_NUMBER=+15551234567
+```
+
+Sign up at [twilio.com](https://www.twilio.com/try-twilio) — a trial account works,
+but trial accounts can only call phone numbers you've first verified in the
+[Twilio console](https://console.twilio.com/us1/develop/phone-numbers/manage/verified).
+Real calls cost money (trial credit covers a demo easily; a US call is roughly a
+couple of cents per minute after that). Without these three variables set, calling
+falls back to the simulated experience for everyone, same as if `real_call_enabled`
+were never set at all.
+
 ## Current modules
 
 - Public splash / welcome page, sign in and register (`sects.html`)

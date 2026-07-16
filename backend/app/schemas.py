@@ -243,6 +243,7 @@ class CallTargetOut(BaseModel):
 class EmergencyCallIn(BaseModel):
     targetType: str
     targetLabel: str
+    targetUserId: Optional[int] = None
 
 
 class EmergencyCallLogOut(BaseModel):
@@ -251,6 +252,9 @@ class EmergencyCallLogOut(BaseModel):
     targetType: str
     targetLabel: str
     createdAt: datetime
+    # True only when a real Twilio bridge call was actually placed - absent/False
+    # means the usual simulated call UI, not that anything failed
+    callPlaced: bool = False
 
 
 class RecentSignupOut(BaseModel):

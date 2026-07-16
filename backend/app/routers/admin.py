@@ -1,3 +1,4 @@
+import os
 import secrets
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -174,7 +175,12 @@ def approve_user(
     ))
     db.commit()
 
-    setup_url = f"{str(request.base_url).rstrip('/')}/sects.html?setupToken={setup_token}"
+    # Prefer PUBLIC_BASE_URL (the LAN address start-server.ps1 detects and
+    # exports) over request.base_url - the request came from the HOA's own
+    # browser, which might be on localhost/127.0.0.1 even when the actual
+    # applicant is on a different device that can only reach the LAN IP.
+    base_url = os.getenv("PUBLIC_BASE_URL") or str(request.base_url).rstrip("/")
+    setup_url = f"{base_url.rstrip('/')}/sects.html?setupToken={setup_token}"
     email_sent = send_email(
         to=user.email,
         subject="Your Tit4Tat account has been approved",

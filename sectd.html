@@ -668,6 +668,7 @@
         }
 
         selectedCallTarget = {
+          id: contact.id,
           name: contact.name,
           initials: contact.initials,
           role: contact.role,
@@ -709,10 +710,18 @@
 
       document.getElementById("callScreen").classList.add("show");
 
+      let result = null;
       try {
-        await window.Tit4TatAPI.logEmergencyCall(selectedCallType, selectedCallTarget.name);
+        result = await window.Tit4TatAPI.logEmergencyCall(selectedCallType, selectedCallTarget.name, selectedCallTarget.id);
       } catch (err) {
-        // logging the call is best-effort and shouldn't block the simulated call UX
+        // logging the call is best-effort and shouldn't block the call UX
+      }
+
+      // A real bridge call was actually placed (see backend/app/telephony_utils.py) -
+      // both real phones are genuinely ringing, so there's no fake "Connected" timer.
+      if (result && result.callPlaced) {
+        document.getElementById("activeCallStatus").textContent = "Ringing your phone...";
+        return;
       }
 
       setTimeout(() => {

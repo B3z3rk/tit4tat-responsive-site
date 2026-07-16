@@ -59,6 +59,14 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path $certFile)) {
 
 $env:TIT4TAT_HTTPS = "1"
 
+# So links emailed to applicants (see admin.approve_user) point somewhere
+# reachable from their own device, not wherever the HOA's own browser
+# happened to be (which might be localhost/127.0.0.1 if they're on the
+# server machine itself).
+if ($lanIp) {
+  $env:PUBLIC_BASE_URL = "https://${lanIp}:${Port}"
+}
+
 Push-Location (Join-Path $root "backend")
 try {
   $proc = Start-Process -FilePath "python" `
@@ -80,6 +88,9 @@ if ($proc.HasExited) {
 }
 
 Write-Host "Tit4Tat server started (PID $($proc.Id))." -ForegroundColor Green
+if ($env:PUBLIC_BASE_URL) {
+  Write-Host "  Emailed links point to : $($env:PUBLIC_BASE_URL)"
+}
 if ($env:SMTP_HOST) {
   Write-Host "  SMTP configured : approval emails will actually be sent via $($env:SMTP_HOST)" -ForegroundColor Green
 } else {
