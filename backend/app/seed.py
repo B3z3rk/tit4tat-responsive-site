@@ -3,13 +3,21 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session as DbSession
 
 from . import models
+from .constants import ADMIN_TIER_ROLES
 from .security import generate_member_code, hash_password
 
 
 def _mk_user(db, **kwargs):
     password = kwargs.pop("password")
+    # These demo passwords are hardcoded in source (public in this repo), so
+    # anyone who reads the code knows them. That's an acceptable convenience
+    # for the non-privileged demo accounts, but Admin-tier accounts wield real
+    # power - force those to be replaced with a private password before the
+    # known one is worth anything, exactly like a real approval/reset would.
+    must_change_password = kwargs.get("role") in ADMIN_TIER_ROLES
     user = models.User(
-        password_hash=hash_password(password), member_code=generate_member_code(db), **kwargs
+        password_hash=hash_password(password), member_code=generate_member_code(db),
+        must_change_password=must_change_password, **kwargs
     )
     db.add(user)
     db.flush()
@@ -54,19 +62,22 @@ def seed_if_empty(db: DbSession) -> None:
         role="HOA", approval_status="approved",
         profile="Manages the platform, verifies users, reviews reports, and oversees community safety.",
     )
+    # mfa_required=True on these three specifically for MFA testing - they
+    # keep their normal MEMBER/REGULAR_MEMBER permissions, just with a TOTP
+    # step added at login (see auth.login()).
     _mk_user(
         db, name="Larry Howell", email="larry.howell@tit4tat.demo", password="welcome123",
-        role="MEMBER", approval_status="approved",
+        role="MEMBER", approval_status="approved", mfa_required=True,
         profile="Verified community member. Can participate in activities, submit reports, and message neighbours.",
     )
     _mk_user(
         db, name="Omar Ricketts", email="omar.ricketts@tit4tat.demo", password="welcome123",
-        role="REGULAR_MEMBER", approval_status="approved",
+        role="REGULAR_MEMBER", approval_status="approved", mfa_required=True,
         profile="Everyday community user. Can view updates, join activities, report issues, and use emergency features.",
     )
     _mk_user(
         db, name="Dontae Ellis", email="dontae.ellis@tit4tat.demo", password="welcome123",
-        role="REGULAR_MEMBER", approval_status="approved",
+        role="REGULAR_MEMBER", approval_status="approved", mfa_required=True,
         profile="Everyday community user. Can view updates, join activities, report issues, and use emergency features.",
     )
 

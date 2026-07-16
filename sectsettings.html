@@ -240,27 +240,44 @@
       el.innerHTML = filtered.map(u => {
         const isAdminTierTarget = u.role === "HOA" || u.role === "SUPER_ADMIN";
 
-        // Only a Super Admin can create, demote, suspend, or reset the
-        // password of an HOA/Super Admin account — a regular HOA sees a
+        // Only a Super Admin can create, demote, suspend, delete, or reset
+        // the password of an HOA/Super Admin account — a regular HOA sees a
         // read-only note instead of the usual controls for those rows.
-        const actions = (isAdminTierTarget && !isSuperAdmin)
-          ? `<span class="admin-tier-note">Only a Super Admin can manage this account.</span>`
-          : `
+        // Change Role, Suspend, and Delete are Super-Admin-only actions
+        // entirely now (not just for admin-tier targets) - a regular HOA
+        // only ever sees Reset Password and Reactivate.
+        let actions;
+        if (isAdminTierTarget && !isSuperAdmin) {
+          actions = `<span class="admin-tier-note">Only a Super Admin can manage this account.</span>`;
+        } else {
+          const roleControls = isSuperAdmin ? `
             <select id="role-${u.id}">
               <option value="REGULAR_MEMBER" ${u.role === "REGULAR_MEMBER" ? "selected" : ""}>Regular Member</option>
               <option value="MEMBER" ${u.role === "MEMBER" ? "selected" : ""}>Verified Member</option>
               <option value="LOCAL_BUSINESS" ${u.role === "LOCAL_BUSINESS" ? "selected" : ""}>Local Business</option>
               <option value="COMMUNITY_LEADER" ${u.role === "COMMUNITY_LEADER" ? "selected" : ""}>Community Leader</option>
               <option value="EMERGENCY_CONTACT" ${u.role === "EMERGENCY_CONTACT" ? "selected" : ""}>Emergency Contact</option>
-              ${isSuperAdmin ? `<option value="HOA" ${u.role === "HOA" ? "selected" : ""}>HOA</option>` : ""}
-              ${isSuperAdmin ? `<option value="SUPER_ADMIN" ${u.role === "SUPER_ADMIN" ? "selected" : ""}>Super Admin</option>` : ""}
+              <option value="HOA" ${u.role === "HOA" ? "selected" : ""}>HOA</option>
+              <option value="SUPER_ADMIN" ${u.role === "SUPER_ADMIN" ? "selected" : ""}>Super Admin</option>
             </select>
             <button class="btn btn-light" onclick="changeRole(${u.id})">Change Role</button>
+          ` : "";
+
+          const suspendControls = u.approvalStatus === "suspended"
+            ? `<button class="btn btn-primary" onclick="reactivate(${u.id})">Reactivate</button>`
+            : (isSuperAdmin ? `<button class="btn btn-danger" onclick="suspend(${u.id})" ${u.id === currentUser.id ? "disabled" : ""}>Suspend</button>` : "");
+
+          const deleteControl = isSuperAdmin
+            ? `<button class="btn btn-danger" onclick="deleteUser(${u.id})" ${u.id === currentUser.id ? "disabled" : ""}>Delete</button>`
+            : "";
+
+          actions = `
+            ${roleControls}
             <button class="btn btn-outline" onclick="resetPassword(${u.id})">Reset Password</button>
-            ${u.approvalStatus === "suspended"
-              ? `<button class="btn btn-primary" onclick="reactivate(${u.id})">Reactivate</button>`
-              : `<button class="btn btn-danger" onclick="suspend(${u.id})" ${u.id === currentUser.id ? "disabled" : ""}>Suspend</button>`}
+            ${suspendControls}
+            ${deleteControl}
           `;
+        }
 
         return `
         <div class="user-row">
@@ -342,6 +359,26 @@
         return;
       }
       showToast("Account reactivated.");
+      await loadUsers();
+      await loadAuditLog();
+    }
+
+    async function deleteUser(id) {
+      const user = allUsers.find(u => u.id === id);
+      const confirmed = window.confirm(
+        `Permanently delete ${user ? user.name : "this account"}? This cannot be undone - unlike Suspend, ` +
+        `there is no way to restore this account afterward.`
+      );
+      if (!confirmed) {
+        return;
+      }
+      try {
+        await window.Tit4TatAPI.deleteUser(id);
+      } catch (err) {
+        showToast(err.message || "Could not delete this account.");
+        return;
+      }
+      showToast("Account deleted.");
       await loadUsers();
       await loadAuditLog();
     }

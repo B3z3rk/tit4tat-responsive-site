@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tit4Tat | Street View</title>
+
+  <link rel="stylesheet" href="src/css/shared.css" />
+
+  <style>
+    /* Page chrome (tokens, sidebar, topbar, buttons, form fields, toast) lives
+       in shared.css. Only this page's specific rules are defined here. */
+
+    .camera-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .camera-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .camera-card video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+
+    .camera-card-body {
+      padding: 14px 16px;
+    }
+
+    .camera-card-body h3 {
+      font-size: 0.98rem;
+      margin-bottom: 3px;
+    }
+
+    .camera-card-body p {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .empty-note {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/images/t4t logop.png" alt="Tit4Tat" /></div>
+        <div class="brand-text">
+          <h1>Tit4Tat</h1>
+          <p>Community Hub</p>
+        </div>
+      </div>
+
+      <div id="roleBadge" style="margin-bottom:12px;"></div>
+
+      <nav class="nav" id="roleNav"></nav>
+
+      <div class="sidebar-footer">
+        <strong>Street View</strong>
+        <p>Recorded camera coverage for shared community areas.</p>
+      </div>
+
+      <div class="sidebar-signout" id="sidebarSignout"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="menuBtn" aria-label="Toggle navigation menu">&#9776;</button>
+          <div class="page-title">
+            <h2>Street View</h2>
+            <p>Recorded camera coverage for common areas around the community.</p>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="user-pill">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <strong id="userName">Member</strong>
+              <small id="userRole">Verified Member</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="camera-grid" id="cameraGrid"></div>
+    </main>
+  </div>
+
+  <div class="mobile-action-bar" id="mobileActionBar"></div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="src/js/apiClient.js"></script>
+  <script src="src/js/localDatabase.js"></script>
+  <script>
+    let currentUser = null;
+
+    // Add a new entry here when another camera clip is dropped into
+    // assets/cctv/ - nothing else on this page needs to change.
+    const CAMERAS = [
+      { label: "Camera 1 - Community Coverage", src: "assets/cctv/212726_cctv_1.mp4" },
+      { label: "Camera 2 - Community Coverage", src: "assets/cctv/264194_cctv.mp4" },
+      { label: "Camera 3 - Community Coverage", src: "assets/cctv/281795_cctv.mp4" }
+    ];
+
+    function renderCameras() {
+      const grid = document.getElementById("cameraGrid");
+
+      if (CAMERAS.length === 0) {
+        grid.innerHTML = `<div class="empty-note">No camera feeds are available right now.</div>`;
+        return;
+      }
+
+      grid.innerHTML = CAMERAS.map(camera => `
+        <div class="camera-card">
+          <video src="${camera.src}" controls preload="metadata" playsinline></video>
+          <div class="camera-card-body">
+            <h3>${camera.label}</h3>
+            <p>Live Stream.</p>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    // Mobile sidebar toggle
+    document.getElementById("menuBtn").addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-open");
+    });
+    document.getElementById("sidebarOverlay").addEventListener("click", function () {
+      document.body.classList.remove("sidebar-open");
+    });
+
+    (async function init() {
+      currentUser = await window.Tit4TatDB.getCurrentUser();
+      if (!currentUser) {
+        window.location.href = "sects.html";
+        return;
+      }
+
+      window.Tit4TatDB.renderMenu("roleNav", "cctv", currentUser);
+      window.Tit4TatDB.renderMobileActionBar("mobileActionBar", currentUser);
+      window.Tit4TatDB.startEmergencyAlertPolling();
+
+      window.Tit4TatDB.renderAvatar("userAvatar", currentUser);
+      document.getElementById("userName").textContent = currentUser.name;
+      document.getElementById("userRole").textContent = window.Tit4TatDB.getRoleLabel(currentUser.role);
+
+      renderCameras();
+    })();
+  </script>
+</body>
+</html>

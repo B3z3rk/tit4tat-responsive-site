@@ -7,3 +7,14 @@ backend/tit4tat.db
 
 # User-uploaded content generated at runtime
 uploads/
+
+# Runtime artifacts from start-server.ps1 / stop-server.ps1
+.server.pid
+server.log
+server.log.err
+
+# Self-signed dev TLS cert/key, generated on first run (see generate_dev_cert.py)
+backend/certs/
+
+# Real SMTP credentials - see .env.example for the template. Never committed.
+.env

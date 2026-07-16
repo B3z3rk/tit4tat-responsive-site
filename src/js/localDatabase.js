@@ -14,7 +14,6 @@
     const formData = new FormData();
     formData.append("name", profile.name);
     formData.append("email", profile.email);
-    if (profile.password) formData.append("password", profile.password);
     if (profile.phone) formData.append("phone", profile.phone);
     if (profile.communityArea) formData.append("communityArea", profile.communityArea);
     if (profile.referenceName) formData.append("referenceName", profile.referenceName);
@@ -27,7 +26,15 @@
 
   async function getCurrentUser() {
     try {
-      return await api.getMe();
+      const user = await api.getMe();
+      // A forced password change (set on approval) blocks every other API
+      // route server-side already — this just gets them to the right screen
+      // instead of every page's own API calls failing one by one.
+      if (user && user.mustChangePassword && !window.location.pathname.endsWith("sects.html")) {
+        window.location.href = "sects.html?forceChangePassword=1";
+        return null;
+      }
+      return user;
     } catch (err) {
       return null;
     }
@@ -108,9 +115,11 @@
       items.push({ label: "Reports",        href: "sectb.html",     key: "reports" });
       items.push({ label: "Activities",     href: "secta.html",     key: "activities" });
       items.push({ label: "Directory",      href: "sectc.html",     key: "directory" });
+      items.push({ label: "Street View",    href: "sectcctv.html",  key: "cctv" });
       items.push({ label: "Messages",       href: "sectmessages.html", key: "messages" });
       items.push({ label: "Announcements",  href: "sectadmin.html", key: "announcements" });
       items.push({ label: "Settings",       href: "sectsettings.html", key: "settings" });
+      items.push({ label: "Profile",        href: "sectprofile.html", key: "profile" });
     } else if (role === "MEMBER" || role === "LOCAL_BUSINESS" || role === "COMMUNITY_LEADER" || role === "EMERGENCY_CONTACT") {
       // Standard verified member access per role spec — Local Business/Community
       // Leader/Emergency Contact are specializations of the same member tier and
@@ -119,6 +128,7 @@
       items.push({ label: "Activities",  href: "secta.html", key: "activities" });
       items.push({ label: "Reports",     href: "sectb.html", key: "reports" });
       items.push({ label: "Directory",   href: "sectc.html", key: "directory" });
+      items.push({ label: "Street View", href: "sectcctv.html", key: "cctv" });
       items.push({ label: "Messages",    href: "sectmessages.html", key: "messages" });
       items.push({ label: "Tap Call",    href: "sectd.html", key: "emergency" });
       items.push({ label: "Emergency",   href: "sectd.html", key: "emergency" });
@@ -130,6 +140,7 @@
       items.push({ label: "Activities", href: "secta.html", key: "activities" });
       items.push({ label: "Reports",    href: "sectb.html", key: "reports" });
       items.push({ label: "Directory",  href: "sectc.html", key: "directory" });
+      items.push({ label: "Street View", href: "sectcctv.html", key: "cctv" });
       items.push({ label: "Messages",   href: "sectmessages.html", key: "messages" });
       items.push({ label: "Emergency",  href: "sectd.html", key: "emergency" });
       items.push({ label: "Profile",    href: "sectprofile.html", key: "profile" });
@@ -293,6 +304,52 @@
 
     poll();
     emergencyAlertTimer = setInterval(poll, 6000);
+  }
+
+  // Easter egg: click the sidebar brand logo 5 times within 3 seconds to
+  // reveal the hidden T4 mark. Purely decorative, no functional effect -
+  // wired up once here so it works on every page that includes this file
+  // (every logged-in page has the same sidebar) without touching each one.
+  function showEasterEgg() {
+    let overlay = document.getElementById("t4tEasterEggOverlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "t4tEasterEggOverlay";
+      overlay.className = "t4t-easter-egg-overlay";
+      overlay.innerHTML = `
+        <div class="t4t-easter-egg-card">
+          <img src="assets/images/thide.png" alt="Hidden Tit4Tat mark" />
+          <p>You found the hidden T4!</p>
+        </div>
+      `;
+      overlay.addEventListener("click", () => overlay.classList.remove("show"));
+      document.body.appendChild(overlay);
+    }
+    overlay.classList.add("show");
+    setTimeout(() => overlay.classList.remove("show"), 3500);
+  }
+
+  function initLogoEasterEgg() {
+    const logo = document.querySelector(".brand-logo");
+    if (!logo) return;
+
+    let recentClicks = [];
+    logo.style.cursor = "pointer";
+    logo.addEventListener("click", () => {
+      const now = Date.now();
+      recentClicks = recentClicks.filter(t => now - t < 3000);
+      recentClicks.push(now);
+      if (recentClicks.length >= 5) {
+        recentClicks = [];
+        showEasterEgg();
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initLogoEasterEgg);
+  } else {
+    initLogoEasterEgg();
   }
 
   window.Tit4TatDB = {

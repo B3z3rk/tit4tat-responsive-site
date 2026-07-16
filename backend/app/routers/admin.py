@@ -1,8 +1,8 @@
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session as DbSession
@@ -11,6 +11,7 @@ from .. import models, schemas
 from ..constants import ADMIN_TIER_ROLES, ROLE_ORDER
 from ..database import get_db
 from ..deps import require_role
+from ..email_utils import send_email
 from ..security import hash_password
 from .reports import _to_out as _report_to_out
 
@@ -144,6 +145,7 @@ def view_document(
 def approve_user(
     user_id: int,
     payload: schemas.ApproveIn,
+    request: Request,
     db: DbSession = Depends(get_db),
     admin: models.User = Depends(require_role("HOA")),
 ):
@@ -157,12 +159,38 @@ def approve_user(
     user.role = payload.role or "REGULAR_MEMBER"
     user.approved_by_id = admin.id
     user.approved_at = datetime.utcnow()
+    # No password is assigned here at all - the account is unreachable by
+    # password until the applicant uses their one-time emailed setup link to
+    # pick their own, so there's never a shared/known credential for the HOA
+    # to relay (or for anyone else to intercept) in the first place.
+    user.password_hash = hash_password(secrets.token_urlsafe(24))
     db.commit()
     db.refresh(user)
+
+    setup_token = secrets.token_urlsafe(32)
+    db.add(models.AccountSetupToken(
+        token=setup_token, user_id=user.id,
+        expires_at=datetime.utcnow() + timedelta(hours=24),
+    ))
+    db.commit()
+
+    setup_url = f"{str(request.base_url).rstrip('/')}/sects.html?setupToken={setup_token}"
+    email_sent = send_email(
+        to=user.email,
+        subject="Your Tit4Tat account has been approved",
+        body=(
+            f"Hi {user.name},\n\n"
+            "Your Tit4Tat account has been approved. Set your password to get started:\n\n"
+            f"{setup_url}\n\n"
+            "This link works once and expires in 24 hours.\n"
+        ),
+    )
+
     _log(db, admin, "approve_user", user, detail=f"role={user.role}")
     return schemas.UserOut(
         id=user.id, name=user.name, email=user.email, role=user.role,
         approvalStatus=user.approval_status, profile=user.profile,
+        setupEmailSent=email_sent,
     )
 
 
@@ -215,6 +243,10 @@ def reset_password(
         new_password = generated
 
     user.password_hash = hash_password(new_password)
+    # An HOA-known password (generated or hand-picked) is a temporary one by
+    # definition - force it to be replaced with something only the account
+    # holder knows before they can do anything else, same as approval.
+    user.must_change_password = True
     db.commit()
 
     # existing sessions for this user are invalidated so a reset password takes effect immediately
@@ -230,7 +262,8 @@ def change_role(
     user_id: int,
     payload: schemas.RoleChangeIn,
     db: DbSession = Depends(get_db),
-    actor: models.User = Depends(require_role("HOA")),
+    # Super Admin only — a regular HOA can no longer change anyone's role.
+    actor: models.User = Depends(require_role("SUPER_ADMIN")),
 ):
     if payload.role not in ROLE_ORDER:
         raise HTTPException(status_code=422, detail=f"role must be one of {sorted(ROLE_ORDER)}")
@@ -238,8 +271,6 @@ def change_role(
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    _assert_can_manage_admin_tier(actor, user.role, payload.role)
 
     previous_role = user.role
     user.role = payload.role
@@ -256,13 +287,12 @@ def change_role(
 def suspend_user(
     user_id: int,
     db: DbSession = Depends(get_db),
-    actor: models.User = Depends(require_role("HOA")),
+    # Super Admin only — a regular HOA can no longer suspend accounts.
+    actor: models.User = Depends(require_role("SUPER_ADMIN")),
 ):
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    _assert_can_manage_admin_tier(actor, user.role)
 
     user.approval_status = "suspended"
     db.commit()
@@ -298,6 +328,61 @@ def reactivate_user(
         id=user.id, name=user.name, email=user.email, role=user.role,
         approvalStatus=user.approval_status, profile=user.profile,
     )
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: int,
+    db: DbSession = Depends(get_db),
+    actor: models.User = Depends(require_role("SUPER_ADMIN")),
+):
+    """Permanently removes an account - unlike suspend, this cannot be undone.
+    Content that can't exist without an owner (reports, messages, activity
+    participation, emergency calls, announcements) is removed along with it;
+    references from other rows that are merely informational (audit log,
+    who approved/reset someone, who left a community note) are kept but
+    detached (set to NULL) so that history survives the account itself."""
+    if user_id == actor.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account.")
+
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    name, email = user.name, user.email
+
+    # Detach references from surviving rows rather than deleting them.
+    db.query(models.User).filter(models.User.approved_by_id == user_id).update({"approved_by_id": None})
+    db.query(models.User).filter(models.User.reference_user_id == user_id).update({"reference_user_id": None})
+    db.query(models.AuditLogEntry).filter(models.AuditLogEntry.actor_id == user_id).update({"actor_id": None})
+    db.query(models.AuditLogEntry).filter(models.AuditLogEntry.target_user_id == user_id).update({"target_user_id": None})
+    db.query(models.MemberNote).filter(models.MemberNote.created_by_id == user_id).update({"created_by_id": None})
+    db.query(models.ReportTimelineEvent).filter(models.ReportTimelineEvent.created_by_id == user_id).update({"created_by_id": None})
+    db.query(models.Activity).filter(models.Activity.created_by_id == user_id).update({"created_by_id": None})
+
+    # This account's own ephemeral/personal state.
+    db.query(models.Session).filter(models.Session.user_id == user_id).delete()
+    db.query(models.MfaChallenge).filter(models.MfaChallenge.user_id == user_id).delete()
+    db.query(models.AccountSetupToken).filter(models.AccountSetupToken.user_id == user_id).delete()
+    db.query(models.MemberNote).filter(models.MemberNote.user_id == user_id).delete()
+
+    # Content with a NOT NULL owner column - can't be detached, so it goes
+    # with the account.
+    db.query(models.ActivityParticipant).filter(models.ActivityParticipant.user_id == user_id).delete()
+    db.query(models.EmergencyCall).filter(models.EmergencyCall.user_id == user_id).delete()
+    db.query(models.Announcement).filter(models.Announcement.created_by_id == user_id).delete()
+    db.query(models.Message).filter(
+        or_(models.Message.sender_id == user_id, models.Message.recipient_id == user_id)
+    ).delete()
+
+    report_ids = [r.id for r in db.query(models.Report.id).filter(models.Report.submitted_by_id == user_id)]
+    if report_ids:
+        db.query(models.ReportTimelineEvent).filter(models.ReportTimelineEvent.report_id.in_(report_ids)).delete(synchronize_session=False)
+        db.query(models.Report).filter(models.Report.id.in_(report_ids)).delete(synchronize_session=False)
+
+    db.delete(user)
+    db.commit()
+    _log(db, actor, "delete_user", detail=f"{name} <{email}>")
 
 
 @router.get("/audit-log", response_model=list[schemas.AuditLogEntryOut])

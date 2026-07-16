@@ -49,6 +49,13 @@ class UserOut(BaseModel):
     approvalStatus: str
     profile: Optional[str] = None
     avatarUrl: Optional[str] = None
+    mustChangePassword: bool = False
+    # only populated on the admin-reset-password response, so HOA can relay it to the member
+    temporaryPassword: Optional[str] = None
+    # only populated on the approve-user response - whether the setup-link
+    # email actually went out via real SMTP (False just means it was logged
+    # server-side instead, e.g. no SMTP configured in this environment)
+    setupEmailSent: Optional[bool] = None
 
     class Config:
         from_attributes = True
@@ -185,6 +192,11 @@ class MyProfileUpdateIn(BaseModel):
 
 class ChangePasswordIn(BaseModel):
     currentPassword: str
+    newPassword: str
+
+
+class SetupPasswordIn(BaseModel):
+    token: str
     newPassword: str
 
 

@@ -24,6 +24,10 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     phone = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
+    # set whenever HOA/Super Admin assigns a password the member didn't choose
+    # themselves (approval, admin-triggered reset) — forces a change on next
+    # login before the rest of the app is reachable, see get_current_user.
+    must_change_password = Column(Boolean, default=False)
     role = Column(String, nullable=False, default="REGULAR_MEMBER")  # HOA | MEMBER | REGULAR_MEMBER
     approval_status = Column(String, nullable=False, default="pending")  # pending | approved | rejected
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -67,9 +71,13 @@ class User(Base):
     # can scan it to be vouched for as a reference during registration
     member_code = Column(String, unique=True, nullable=True)
 
-    # TOTP-based MFA, required at login for Admin-tier accounts (HOA/SUPER_ADMIN)
+    # TOTP-based MFA, always required at login for Admin-tier accounts
+    # (HOA/SUPER_ADMIN); mfa_required additionally opts in any other specific
+    # account regardless of role (e.g. for testing) without changing their
+    # permissions. mfa_enabled just tracks whether enrollment is complete.
     totp_secret = Column(String, nullable=True)
     mfa_enabled = Column(Boolean, default=False)
+    mfa_required = Column(Boolean, default=False)
 
     notes = relationship("MemberNote", foreign_keys="MemberNote.user_id", back_populates="user")
 
@@ -107,6 +115,20 @@ class MfaChallenge(Base):
     purpose = Column(String, nullable=False)  # "enroll" | "login"
     # only set for "enroll" — the not-yet-confirmed secret being set up
     pending_secret = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+
+
+class AccountSetupToken(Base):
+    """A single-use, emailed link that lets a newly-approved applicant set
+    their own password directly - no temporary password is ever assigned,
+    shown to the HOA, or transmitted anywhere, so there's nothing to relay
+    or intercept in the first place."""
+
+    __tablename__ = "account_setup_tokens"
+
+    token = Column(String, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
 

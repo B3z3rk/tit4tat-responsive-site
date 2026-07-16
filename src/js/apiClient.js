@@ -76,6 +76,9 @@
     changePassword(currentPassword, newPassword) {
       return request("POST", "/api/auth/change-password", { currentPassword, newPassword });
     },
+    setupPassword(token, newPassword) {
+      return request("POST", "/api/auth/setup-password", { token, newPassword });
+    },
 
     // admin
     getAdminOverview() {
@@ -104,6 +107,9 @@
     },
     reactivateUser(id) {
       return request("POST", `/api/admin/users/${id}/reactivate`);
+    },
+    deleteUser(id) {
+      return request("DELETE", `/api/admin/users/${id}`);
     },
     getAuditLog() {
       return request("GET", "/api/admin/audit-log");

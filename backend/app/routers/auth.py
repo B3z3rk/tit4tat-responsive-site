@@ -25,6 +25,32 @@ router = APIRouter(tags=["auth"])
 
 MFA_CHALLENGE_TTL = timedelta(minutes=10)
 
+# In-memory login rate limiting, keyed by email and by IP separately so a
+# lockout on one axis can't be dodged by varying the other. Fine for a
+# single-process deployment; would need a shared store (e.g. Redis) behind
+# multiple workers/instances.
+LOGIN_ATTEMPT_LIMIT = 5
+LOGIN_ATTEMPT_WINDOW = timedelta(minutes=15)
+_login_attempts: dict[str, list[datetime]] = {}
+
+
+def _rate_limit_key_blocked(key: str) -> bool:
+    now = datetime.utcnow()
+    attempts = [t for t in _login_attempts.get(key, []) if now - t < LOGIN_ATTEMPT_WINDOW]
+    _login_attempts[key] = attempts
+    return len(attempts) >= LOGIN_ATTEMPT_LIMIT
+
+
+def _record_failed_login(*keys: str) -> None:
+    now = datetime.utcnow()
+    for key in keys:
+        _login_attempts.setdefault(key, []).append(now)
+
+
+def _clear_failed_login(*keys: str) -> None:
+    for key in keys:
+        _login_attempts.pop(key, None)
+
 # Verification documents live under uploads/verification/{user_id}/ — same
 # repo-root convention as uploads/avatars and uploads/activities, but this
 # specific subpath is blocked from the static mount (see main.py) since these
@@ -77,7 +103,6 @@ async def register(
     db: DbSession = Depends(get_db),
     name: str = Form(...),
     email: EmailStr = Form(...),
-    password: str = Form(None),
     phone: str = Form(None),
     communityArea: str = Form(None),
     referenceName: str = Form(None),
@@ -101,11 +126,15 @@ async def register(
             reference_user = candidate
             referenceName = candidate.name
 
+    # No real password exists yet at this stage - the account can't log in
+    # until an HOA approves it, and approval always assigns a fresh random
+    # temporary password (see admin.approve_user), so this hash is never
+    # actually used to authenticate anyone.
     user = models.User(
         name=name,
         email=email_normalized,
         phone=phone,
-        password_hash=hash_password(password or "welcome123"),
+        password_hash=hash_password(secrets.token_urlsafe(24)),
         role="REGULAR_MEMBER",
         approval_status="pending",
         community_area=communityArea,
@@ -135,21 +164,56 @@ async def register(
     return _to_user_out(user)
 
 
-@router.post("/login")
-def login(payload: schemas.LoginIn, response: Response, db: DbSession = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == payload.email.lower()).first()
-    if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid email or password.")
-    if user.approval_status == "suspended":
-        raise HTTPException(status_code=403, detail="Your account has been suspended by an admin.")
-    if user.approval_status != "approved":
-        raise HTTPException(status_code=403, detail="Your account is pending admin approval.")
+@router.post("/setup-password", status_code=204)
+def setup_password(payload: schemas.SetupPasswordIn, db: DbSession = Depends(get_db)):
+    """Deliberately unauthenticated - this is what an applicant's one-time
+    emailed setup link (see admin.approve_user) hits to pick their own
+    password. The token itself, not a session, is the proof of identity."""
+    setup_token = db.get(models.AccountSetupToken, payload.token)
+    if not setup_token or setup_token.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="This setup link is invalid or has expired.")
+    if len(payload.newPassword) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
 
-    # Admin-tier accounts require a second factor. Password-correct isn't
-    # enough on its own to get a session — a pending challenge is issued
-    # instead, and the real session/cookie only appears after the matching
+    user = db.get(models.User, setup_token.user_id)
+    user.password_hash = hash_password(payload.newPassword)
+    user.must_change_password = False
+    db.delete(setup_token)
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.post("/login")
+def login(payload: schemas.LoginIn, request: Request, response: Response, db: DbSession = Depends(get_db)):
+    # Wrong password, unknown email, unapproved, and suspended accounts all
+    # produce the exact same response (status, message, and rate-limit
+    # accounting) - telling them apart would let an attacker enumerate which
+    # emails have accounts, and separately which of those are pending/active.
+    email_key = f"email:{payload.email.lower()}"
+    ip_key = f"ip:{request.client.host if request.client else 'unknown'}"
+
+    if _rate_limit_key_blocked(email_key) or _rate_limit_key_blocked(ip_key):
+        raise HTTPException(status_code=429, detail="Too many attempts. Please try again later.")
+
+    user = db.query(models.User).filter(models.User.email == payload.email.lower()).first()
+    valid_login = (
+        user is not None
+        and verify_password(payload.password, user.password_hash)
+        and user.approval_status == "approved"
+    )
+    if not valid_login:
+        _record_failed_login(email_key, ip_key)
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+    _clear_failed_login(email_key, ip_key)
+
+    # Admin-tier accounts always require a second factor; mfa_required
+    # additionally opts in any other specific account (e.g. for testing)
+    # without changing its role/permissions. Password-correct isn't enough
+    # on its own to get a session — a pending challenge is issued instead,
+    # and the real session/cookie only appears after the matching
     # /mfa/verify-* call succeeds.
-    if user.role in ADMIN_TIER_ROLES:
+    if user.role in ADMIN_TIER_ROLES or user.mfa_required:
         if user.mfa_enabled:
             challenge = models.MfaChallenge(
                 token=secrets.token_urlsafe(24), user_id=user.id, purpose="login",
@@ -159,15 +223,30 @@ def login(payload: schemas.LoginIn, response: Response, db: DbSession = Depends(
             db.commit()
             return schemas.MfaChallengeOut(mfaRequired=True, challengeToken=challenge.token)
 
-        # Not yet enrolled — issue a fresh secret and require it to be
-        # confirmed with one valid code before it's ever active.
-        secret = pyotp.random_base32()
-        challenge = models.MfaChallenge(
-            token=secrets.token_urlsafe(24), user_id=user.id, purpose="enroll",
-            pending_secret=secret, expires_at=datetime.utcnow() + MFA_CHALLENGE_TTL,
+        # Not yet enrolled. Reuse an existing unexpired enroll challenge for
+        # this user if one's already pending, rather than minting a fresh
+        # secret on every login attempt - otherwise any retry (mistyped
+        # password, page reload, taking too long to grab a code) hands back
+        # a different QR code than the one they already scanned into their
+        # authenticator app, making it look like enrollment never sticks.
+        challenge = (
+            db.query(models.MfaChallenge)
+            .filter(
+                models.MfaChallenge.user_id == user.id,
+                models.MfaChallenge.purpose == "enroll",
+                models.MfaChallenge.expires_at > datetime.utcnow(),
+            )
+            .order_by(models.MfaChallenge.expires_at.desc())
+            .first()
         )
-        db.add(challenge)
-        db.commit()
+        if not challenge:
+            challenge = models.MfaChallenge(
+                token=secrets.token_urlsafe(24), user_id=user.id, purpose="enroll",
+                pending_secret=pyotp.random_base32(), expires_at=datetime.utcnow() + MFA_CHALLENGE_TTL,
+            )
+            db.add(challenge)
+            db.commit()
+        secret = challenge.pending_secret
         otpauth_url = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name="Tit4Tat")
         return schemas.MfaChallengeOut(
             mfaSetupRequired=True, challengeToken=challenge.token, secret=secret, otpauthUrl=otpauth_url,
@@ -238,6 +317,7 @@ def change_password(
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
 
     user.password_hash = hash_password(payload.newPassword)
+    user.must_change_password = False
     # invalidate every session (including this one) so the new password takes
     # effect immediately everywhere, matching the admin-triggered reset flow
     db.query(models.Session).filter(models.Session.user_id == user.id).delete()
@@ -250,4 +330,5 @@ def _to_user_out(user: models.User) -> schemas.UserOut:
         id=user.id, name=user.name, email=user.email, role=user.role,
         approvalStatus=user.approval_status, profile=user.profile,
         avatarUrl=user.avatar_path,
+        mustChangePassword=user.must_change_password,
     )

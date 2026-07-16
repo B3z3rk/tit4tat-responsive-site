@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -5,11 +6,17 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .database import Base, SessionLocal, engine
+from .database import Base, SessionLocal, engine, run_lightweight_migrations
 from .routers import activities, admin, announcements, auth, dashboard, directory, emergency, messages, reports
 from .seed import seed_if_empty
 
+# Without this, INFO-level messages (e.g. email_utils' "SMTP not configured,
+# logging this email instead" fallback) are silently dropped - Python's
+# logging module has no output handler at all until something configures one.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+
 Base.metadata.create_all(bind=engine)
+run_lightweight_migrations()
 
 with SessionLocal() as db:
     seed_if_empty(db)

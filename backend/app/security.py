@@ -1,3 +1,4 @@
+import os
 import secrets
 from datetime import datetime, timedelta
 
@@ -7,6 +8,11 @@ from sqlalchemy.orm import Session as DbSession
 
 from . import models
 from .constants import ADMIN_TIER_ROLES
+
+# Set by start-server.ps1 when it launches uvicorn with a TLS cert - only
+# mark the cookie Secure when the connection is actually HTTPS, or browsers
+# reject it outright and no one can sign in over plain-HTTP local dev.
+HTTPS_ENABLED = os.getenv("TIT4TAT_HTTPS") == "1"
 
 SESSION_COOKIE_NAME = "t4t_session"
 SESSION_TTL = timedelta(days=7)
@@ -54,7 +60,7 @@ def set_session_cookie(response: Response, token: str, user: models.User) -> Non
         value=token,
         httponly=True,
         samesite="lax",
-        secure=False,
+        secure=HTTPS_ENABLED,
         path="/",
         max_age=int(_session_ttl_for(user).total_seconds()),
     )

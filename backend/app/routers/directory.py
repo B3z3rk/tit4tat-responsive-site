@@ -33,7 +33,7 @@ def _initials(name: str) -> str:
     return (parts[0][0] + parts[-1][0]).upper()
 
 
-def _to_out(user: models.User) -> schemas.MemberOut:
+def _to_out(user: models.User, *, include_member_code: bool = False) -> schemas.MemberOut:
     return schemas.MemberOut(
         id=user.id,
         name=user.name,
@@ -53,7 +53,11 @@ def _to_out(user: models.User) -> schemas.MemberOut:
         bio=user.bio,
         notes=[n.note for n in sorted(user.notes, key=lambda n: n.created_at)],
         avatarUrl=user.avatar_path,
-        memberCode=user.member_code,
+        # Only ever returned to the account owner themselves (the /me-scoped
+        # endpoints below) - anyone who could see another member's code via
+        # the directory could scan it and falsely claim that member vouched
+        # for them as a reference, without that member's knowledge.
+        memberCode=user.member_code if include_member_code else None,
     )
 
 
@@ -92,7 +96,7 @@ def list_members(db: DbSession = Depends(get_db), user: models.User = Depends(ge
 # falling into the int path-converter below and failing validation.
 @router.get("/me", response_model=schemas.MemberOut)
 def get_my_profile(user: models.User = Depends(get_current_user)):
-    return _to_out(user)
+    return _to_out(user, include_member_code=True)
 
 
 @router.patch("/me", response_model=schemas.MemberOut)
@@ -126,7 +130,7 @@ def update_my_business(
         user.category = "General Member"
     db.commit()
     db.refresh(user)
-    return _to_out(user)
+    return _to_out(user, include_member_code=True)
 
 
 @router.patch("/me/profile", response_model=schemas.MemberOut)
@@ -145,7 +149,7 @@ def update_my_profile(
         user.availability = payload.availability.strip() or None
     db.commit()
     db.refresh(user)
-    return _to_out(user)
+    return _to_out(user, include_member_code=True)
 
 
 @router.post("/me/avatar", response_model=schemas.MemberOut)
@@ -178,7 +182,7 @@ async def upload_my_avatar(
     user.avatar_path = f"/uploads/avatars/{user.id}{ext}"
     db.commit()
     db.refresh(user)
-    return _to_out(user)
+    return _to_out(user, include_member_code=True)
 
 
 @router.get("/{member_id}", response_model=schemas.MemberOut)

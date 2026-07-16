@@ -429,13 +429,22 @@
 
     async function approveUser(id) {
       const role = document.getElementById(`role-${id}`).value;
+      let result;
       try {
-        await window.Tit4TatAPI.approveUser(id, role);
+        result = await window.Tit4TatAPI.approveUser(id, role);
       } catch (err) {
         showToast("Could not approve this user.");
         return;
       }
-      showToast("Member approved.");
+      if (result.setupEmailSent) {
+        showToast(`Member approved. Setup link emailed to ${result.name}.`);
+      } else {
+        window.alert(
+          `Member approved.\n\nNo email was actually sent (SMTP isn't configured in this environment) - ` +
+          `the setup link for ${result.name} was logged to the server console instead. Check server.log ` +
+          `(or wherever the backend's stdout is going) for the link and share it with them manually.`
+        );
+      }
       renderPending();
       renderOverview();
     }

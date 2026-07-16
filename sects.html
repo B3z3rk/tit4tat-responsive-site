@@ -621,12 +621,14 @@
         <div id="mfaSetupBox" style="display:none; margin-bottom: 18px;">
           <p class="helper-text">
             HOA and Super Admin accounts require an authenticator app (Google Authenticator, Authy, or similar).
-            Add a new account using the setup key below, then enter the 6-digit code it shows to finish signing in.
+            Scan the QR code below with it — or add the setup key manually if you can't scan — then enter the
+            6-digit code it shows to finish signing in.
           </p>
+          <div id="mfaQrWrap" style="display:flex; justify-content:center; margin: 14px 0;"></div>
           <div class="upload-row" style="cursor: default;">
             <div class="upload-icon icon-ref">&#128273;</div>
             <div class="upload-row-text">
-              <strong>Setup key</strong>
+              <strong>Setup key (manual entry)</strong>
               <span id="mfaSecretText" style="word-break: break-all;"></span>
             </div>
           </div>
@@ -641,6 +643,63 @@
         </form>
 
         <div class="success-box" id="successBoxMfa"></div>
+      </section>
+
+      <!-- Screen 6: Forced password change (shown on first login for
+           seeded/admin-tier accounts, after an admin-triggered reset, or any
+           login/page visit before that first-time change is done) -->
+      <section class="screen screen-center" id="forcePasswordScreen">
+        <h2 class="center">Set a New Password</h2>
+        <p class="subtitle center">
+          For security, please set a password only you know before continuing.
+        </p>
+
+        <form class="form" id="forcePasswordForm" onsubmit="submitForcePasswordChange(event)">
+          <div class="form-group">
+            <label for="forceCurrentPassword">Current password</label>
+            <input id="forceCurrentPassword" type="password" placeholder="Enter your current password" required />
+          </div>
+
+          <div class="form-group">
+            <label for="forceNewPassword">New Password</label>
+            <input id="forceNewPassword" type="password" placeholder="At least 6 characters" required />
+          </div>
+
+          <div class="form-group">
+            <label for="forceConfirmPassword">Confirm New Password</label>
+            <input id="forceConfirmPassword" type="password" placeholder="Repeat new password" required />
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit">Change Password &amp; Continue</button>
+        </form>
+
+        <div class="success-box" id="successBoxForcePassword"></div>
+      </section>
+
+      <!-- Screen 7: Account setup (reached via the one-time link emailed
+           after HOA approval - no password exists yet, the link itself is
+           the credential) -->
+      <section class="screen screen-center" id="setupPasswordScreen">
+        <h2 class="center">Welcome to Tit4Tat</h2>
+        <p class="subtitle center">
+          Your account has been approved. Choose a password to finish setting it up.
+        </p>
+
+        <form class="form" id="setupPasswordForm" onsubmit="submitAccountSetup(event)">
+          <div class="form-group">
+            <label for="setupNewPassword">Password</label>
+            <input id="setupNewPassword" type="password" placeholder="At least 6 characters" required />
+          </div>
+
+          <div class="form-group">
+            <label for="setupConfirmPassword">Confirm Password</label>
+            <input id="setupConfirmPassword" type="password" placeholder="Repeat password" required />
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit">Set Password &amp; Continue</button>
+        </form>
+
+        <div class="success-box" id="successBoxSetupPassword"></div>
       </section>
 
       <!-- Screen 4: Register -->
@@ -752,6 +811,7 @@
   <script src="src/js/apiClient.js"></script>
   <script src="src/js/localDatabase.js"></script>
   <script src="src/js/jsQR.js"></script>
+  <script src="src/js/qrcode-generator.js"></script>
   <script>
     const uploads = { reference: null, id: null, bill: null };
 
@@ -760,7 +820,9 @@
       2: "requirementsScreen",
       3: "signInScreen",
       4: "registerScreen",
-      5: "mfaScreen"
+      5: "mfaScreen",
+      6: "forcePasswordScreen",
+      7: "setupPasswordScreen"
     };
 
     let pendingMfa = null; // { challengeToken, mode: "enroll" | "login" }
@@ -875,6 +937,26 @@
       showToast("Document attached.");
     }
 
+    const UPLOAD_PLACEHOLDERS = {
+      reference: "Upload references document",
+      id: "Upload a clear copy of your ID",
+      bill: "Upload recent utility bill"
+    };
+
+    function resetRegisterForm() {
+      document.getElementById("registerForm").reset();
+
+      uploads.reference = null;
+      uploads.id = null;
+      uploads.bill = null;
+      for (const key of Object.keys(UPLOAD_PLACEHOLDERS)) {
+        document.getElementById(`${key}Upload`).textContent = UPLOAD_PLACEHOLDERS[key];
+        document.getElementById(`${key}UploadRow`).classList.remove("uploaded");
+      }
+
+      clearScannedReference();
+    }
+
     function forgotPassword() {
       showToast("Password resets aren't self-service yet — contact your community's HOA.");
     }
@@ -894,8 +976,11 @@
       try {
         result = await window.Tit4TatDB.authenticateUser(email, password);
       } catch (err) {
-        if (err instanceof window.Tit4TatAPI.ApiError && err.status === 403) {
-          showToast("Your account is still pending HOA approval.");
+        // Deliberately vague: wrong password, unknown email, and an account
+        // that isn't approved yet all show the same message, so there's
+        // nothing here for someone probing logins to learn from.
+        if (err instanceof window.Tit4TatAPI.ApiError && err.status === 429) {
+          showToast(err.message || "Too many attempts. Please try again later.");
         } else {
           showToast("Invalid email or password.");
         }
@@ -904,7 +989,7 @@
 
       if (result.mfaSetupRequired) {
         pendingMfa = { challengeToken: result.challengeToken, mode: "enroll" };
-        showMfaScreen({ secret: result.secret });
+        showMfaScreen({ secret: result.secret, otpauthUrl: result.otpauthUrl });
         return;
       }
       if (result.mfaRequired) {
@@ -916,7 +1001,7 @@
       completeSignIn(result);
     }
 
-    function showMfaScreen({ secret }) {
+    function showMfaScreen({ secret, otpauthUrl }) {
       const isEnroll = pendingMfa.mode === "enroll";
       document.getElementById("mfaTitle").textContent =
         isEnroll ? "Set Up Two-Factor Authentication" : "Two-Factor Verification";
@@ -926,6 +1011,11 @@
       document.getElementById("mfaSetupBox").style.display = isEnroll ? "block" : "none";
       if (isEnroll) {
         document.getElementById("mfaSecretText").textContent = secret;
+        const qrWrap = document.getElementById("mfaQrWrap");
+        const qr = qrcode(0, "M");
+        qr.addData(otpauthUrl);
+        qr.make();
+        qrWrap.innerHTML = qr.createSvgTag(5, 0);
       }
       document.getElementById("mfaCodeInput").value = "";
       document.getElementById("successBoxMfa").classList.remove("show");
@@ -967,6 +1057,12 @@
     }
 
     function completeSignIn(user, successBoxId) {
+      if (user.mustChangePassword) {
+        document.getElementById("forcePasswordForm").reset();
+        goToStep(6);
+        return;
+      }
+
       showToast("Signed in successfully.");
 
       const isAdminTier = user.role === "HOA" || user.role === "SUPER_ADMIN";
@@ -983,6 +1079,79 @@
       setTimeout(() => {
         window.location.href = destination;
       }, 700);
+    }
+
+    async function submitForcePasswordChange(event) {
+      event.preventDefault();
+
+      const currentPassword = document.getElementById("forceCurrentPassword").value;
+      const newPassword = document.getElementById("forceNewPassword").value;
+      const confirmPassword = document.getElementById("forceConfirmPassword").value;
+
+      if (newPassword.length < 6) {
+        showToast("New password must be at least 6 characters.");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        showToast("New password and confirmation don't match.");
+        return;
+      }
+
+      try {
+        await window.Tit4TatAPI.changePassword(currentPassword, newPassword);
+      } catch (err) {
+        showToast(err.message || "Could not change password.");
+        return;
+      }
+
+      // Changing the password invalidates every session for this account
+      // (including the one that just got them here), so they sign back in fresh.
+      const successBox = document.getElementById("successBoxForcePassword");
+      successBox.innerHTML = `<strong>Password changed.</strong><br>Please sign in again with your new password.`;
+      successBox.classList.add("show");
+
+      setTimeout(() => {
+        document.getElementById("signInForm").reset();
+        goToStep(3);
+      }, 1200);
+    }
+
+    let pendingSetupToken = null;
+
+    async function submitAccountSetup(event) {
+      event.preventDefault();
+
+      const newPassword = document.getElementById("setupNewPassword").value;
+      const confirmPassword = document.getElementById("setupConfirmPassword").value;
+
+      if (newPassword.length < 6) {
+        showToast("Password must be at least 6 characters.");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        showToast("Password and confirmation don't match.");
+        return;
+      }
+
+      try {
+        await window.Tit4TatAPI.setupPassword(pendingSetupToken, newPassword);
+      } catch (err) {
+        showToast(err.message || "This setup link is invalid or has expired.");
+        return;
+      }
+
+      // Drop the token from the URL so reloading this page doesn't try to
+      // reuse an already-consumed (or now-irrelevant) setup link.
+      window.history.replaceState({}, "", "sects.html");
+
+      const successBox = document.getElementById("successBoxSetupPassword");
+      successBox.innerHTML = `<strong>Password set.</strong><br>Please sign in to continue.`;
+      successBox.classList.add("show");
+
+      setTimeout(() => {
+        document.getElementById("signInForm").reset();
+        goToStep(3);
+      }, 1200);
     }
 
     async function register(event) {
@@ -1006,7 +1175,6 @@
           name,
           email,
           phone,
-          password: "welcome123",
           communityArea,
           referenceName,
           referenceUserId: scannedReferenceUserId,
@@ -1024,7 +1192,7 @@
         return;
       }
 
-      clearScannedReference();
+      resetRegisterForm();
 
       successBox.innerHTML = `
         <strong>Registration request submitted.</strong><br>
@@ -1045,6 +1213,37 @@
         toast.classList.remove("show");
       }, 2500);
     }
+
+    // A newly-approved applicant lands here via the one-time link emailed to
+    // them (see admin.approve_user) - no account/session exists yet, so this
+    // takes priority over the splash screen and skips the forced-password
+    // check below entirely.
+    (function checkSetupToken() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("setupToken");
+      if (token) {
+        pendingSetupToken = token;
+        goToStep(7);
+      }
+    })();
+
+    // Covers arriving here already signed in with a pending forced password
+    // change - either redirected from another page (localDatabase.js's
+    // getCurrentUser guard) or a direct visit. Calls the API directly rather
+    // than window.Tit4TatDB.getCurrentUser() to avoid re-triggering that
+    // same redirect in a loop.
+    (async function checkForcedPasswordChange() {
+      if (pendingSetupToken) return;
+      let user;
+      try {
+        user = await window.Tit4TatAPI.getMe();
+      } catch (err) {
+        return;
+      }
+      if (user && user.mustChangePassword) {
+        goToStep(6);
+      }
+    })();
   </script>
 </body>
 </html>

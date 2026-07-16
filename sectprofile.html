@@ -52,6 +52,50 @@
       margin-bottom: 12px;
     }
 
+    .profile-left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .qr-card {
+      text-align: center;
+    }
+
+    .qr-card .section-header {
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .qr-box {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .qr-box svg {
+      display: block;
+      width: 160px;
+      height: 160px;
+    }
+
+    .qr-code-text {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
     .field {
       margin-bottom: 16px;
     }
@@ -161,31 +205,33 @@
       </header>
 
       <div class="profile-layout">
-        <!-- Photo -->
-        <section class="section-card photo-card">
-          <div class="photo-frame" id="photoFrame">U</div>
-          <h3 id="photoName">Your Name</h3>
-          <p id="photoRole">Verified Member</p>
+        <div class="profile-left-col">
+          <!-- Photo -->
+          <section class="section-card photo-card">
+            <div class="photo-frame" id="photoFrame">U</div>
+            <h3 id="photoName">Your Name</h3>
+            <p id="photoRole">Verified Member</p>
 
-          <div class="photo-actions">
-            <input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" />
-            <div>
-              <button class="btn btn-primary" style="width: 100%;" onclick="uploadAvatar()">Upload Photo</button>
+            <div class="photo-actions">
+              <input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" />
+              <div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="uploadAvatar()">Upload Photo</button>
+              </div>
+              <p class="hint">JPEG, PNG, GIF, or WEBP. Max 5MB.</p>
             </div>
-            <p class="hint">JPEG, PNG, GIF, or WEBP. Max 5MB.</p>
-          </div>
-        </section>
+          </section>
 
-        <!-- Reference QR -->
-        <section class="section-card" style="margin-top: 20px; text-align: center;">
-          <div class="section-header" style="justify-content: center; text-align: center;">
-            <div>
-              <h3>My Reference QR Code</h3>
-              <p>Show this to someone registering — scanning it verifies you as their community reference.</p>
+          <!-- Reference QR -->
+          <section class="section-card qr-card">
+            <div class="section-header">
+              <div>
+                <h3>My Reference QR Code</h3>
+                <p>Show this to someone registering — scanning it verifies you as their community reference.</p>
+              </div>
             </div>
-          </div>
-          <div id="referenceQrWrap" style="display: flex; justify-content: center; margin-top: 8px;"></div>
-        </section>
+            <div id="referenceQrWrap"></div>
+          </section>
+        </div>
 
         <div>
           <!-- Profile details -->
@@ -286,13 +332,18 @@
     function renderReferenceQr() {
       const wrap = document.getElementById("referenceQrWrap");
       if (!myProfile.memberCode) {
-        wrap.textContent = "No reference code available yet.";
+        wrap.innerHTML = `<p class="hint">No reference code available yet.</p>`;
         return;
       }
       const qr = qrcode(0, "M");
       qr.addData(myProfile.memberCode);
       qr.make();
-      wrap.innerHTML = qr.createSvgTag(6, 0);
+      wrap.innerHTML = `
+        <div class="qr-box">
+          ${qr.createSvgTag(6, 0)}
+          <span class="qr-code-text">${myProfile.memberCode}</span>
+        </div>
+      `;
     }
 
     async function loadProfile() {
@@ -406,10 +457,6 @@
       currentUser = await window.Tit4TatDB.getCurrentUser();
       if (!currentUser) {
         window.location.href = "sects.html";
-        return;
-      }
-      if (window.Tit4TatDB.hasAccess(currentUser, "HOA")) {
-        window.location.href = "sectadmin.html";
         return;
       }
 
