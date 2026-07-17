@@ -72,6 +72,13 @@ class PendingUserOut(BaseModel):
     referenceUploaded: bool
     idUploaded: bool
     billUploaded: bool
+    # OCR-based soft format check - None means unavailable (Tesseract not
+    # installed) or not yet checked, not that it failed. See
+    # document_verification.py.
+    idFormatVerified: Optional[bool] = None
+    billFormatVerified: Optional[bool] = None
+    billIssuerDetected: Optional[str] = None
+    nameMatchesId: Optional[bool] = None
 
     class Config:
         from_attributes = True

@@ -117,6 +117,34 @@ couple of cents per minute after that). Without these three variables set, calli
 falls back to the simulated experience for everyone, same as if `real_call_enabled`
 were never set at all.
 
+### Registration document format verification (OCR)
+
+ID and utility bill uploads at registration are checked against a magic-byte
+signature (confirms it's a real JPEG/PNG/GIF/WEBP/PDF, not something malicious with a
+spoofed extension - always on, no setup needed) and, if Tesseract OCR is installed,
+an additional soft content check: the actual text on the page is read and compared
+against keyword patterns for known real documents (a Jamaican Elector ID; Digicel,
+FLOW, JPS, or National Water Commission bills).
+
+This is a confidence signal for the HOA/Super Admin during manual review, not a hard
+gate — a blurry photo or an odd angle can OCR poorly, and rejecting registration
+outright over that would lock out real applicants. A mismatch just shows a "doesn't
+match a known format, check manually" badge on the pending-approval card instead of
+blocking anything.
+
+Requires the Tesseract binary installed separately (not just the `pytesseract` pip
+package):
+
+```powershell
+winget install --id tesseract-ocr.tesseract --source winget
+```
+
+Without it, `id_format_verified`/`utility_bill_format_verified` just stay `null` for
+every registration (verification skipped entirely, not failing closed) — registration
+and approval work exactly the same either way. If it's installed somewhere other than
+the default `C:\Program Files\Tesseract-OCR\tesseract.exe`, set `TESSERACT_CMD` in
+`.env` to the actual path.
+
 ## Current modules
 
 - Public splash / welcome page, sign in and register (`sects.html`)

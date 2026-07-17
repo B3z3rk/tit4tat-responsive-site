@@ -148,6 +148,7 @@
 
     .badge.uploaded { color: #166534; background: #dcfce7; }
     .badge.missing  { color: #92400e; background: #fef3c7; }
+    .badge.flagged  { color: #991b1b; background: #fee2e2; }
     .badge.uploaded a { text-decoration: underline; font-weight: 800; }
 
     .approval-actions {
@@ -172,6 +173,62 @@
 
     .log-table-wrap {
       overflow-x: auto;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 8, 47, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .reject-modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      width: min(480px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      text-align: left;
+    }
+
+    .reject-modal h3 {
+      margin-bottom: 4px;
+    }
+
+    .reject-modal p.subtitle {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-bottom: 16px;
+    }
+
+    .reject-reason-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .reject-reason-list label {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .reject-reason-list input[type="checkbox"] {
+      margin-top: 3px;
     }
 
     table { width: 100%; border-collapse: collapse; min-width: 520px; }
@@ -306,6 +363,25 @@
 
   <div class="mobile-action-bar" id="mobileActionBar"></div>
 
+  <div class="modal-backdrop" id="rejectModal">
+    <div class="reject-modal">
+      <h3>Reject Registration</h3>
+      <p class="subtitle" id="rejectModalSubtitle">Applicant name</p>
+
+      <div class="reject-reason-list" id="rejectReasonList"></div>
+
+      <div class="field">
+        <label for="rejectDetails">Additional details (optional)</label>
+        <textarea id="rejectDetails" rows="3" placeholder="Anything else the applicant should know"></textarea>
+      </div>
+
+      <div class="modal-actions" style="display:flex; gap:10px; margin-top: 8px;">
+        <button class="btn btn-light" onclick="closeRejectModal()" style="flex:1;">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmReject()" style="flex:1;">Reject &amp; Notify</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="src/js/apiClient.js"></script>
@@ -374,15 +450,27 @@
         : `<div class="empty-note">No reports yet.</div>`;
     }
 
-    function uploadBadge(label, uploaded, userId, docType, canView) {
+    function uploadBadge(label, uploaded, userId, docType, canView, formatVerified, issuerDetected) {
       if (!uploaded) {
         return `<span class="badge missing">⚠️ ${label} missing</span>`;
       }
       const viewLink = canView
         ? ` <a href="/api/admin/users/${userId}/documents/${docType}" target="_blank" rel="noopener">View</a>`
         : "";
+      // formatVerified is a soft OCR-based signal, not a hard gate - null/undefined
+      // means it wasn't checked at all (e.g. OCR unavailable), which reads the
+      // same as before this feature existed: no claim either way.
+      if (formatVerified === false) {
+        return `<span class="badge flagged">⚠️ ${label} attached - doesn't match a known format, check manually${viewLink}</span>`;
+      }
+      if (formatVerified === true) {
+        const issuerNote = issuerDetected ? ` (${issuerDetected})` : "";
+        return `<span class="badge uploaded">✅ ${label} attached - matches expected format${issuerNote}${viewLink}</span>`;
+      }
       return `<span class="badge uploaded">✅ ${label} attached${viewLink}</span>`;
     }
+
+    let currentPendingList = [];
 
     async function renderPending() {
       const pendingList = document.getElementById("pendingList");
@@ -393,6 +481,7 @@
         pendingList.innerHTML = `<div class="empty-note">Could not load pending approvals.</div>`;
         return;
       }
+      currentPendingList = pending;
 
       if (pending.length === 0) {
         pendingList.innerHTML = `<div class="empty-note">No pending registrations right now.</div>`;
@@ -412,8 +501,9 @@
           </div>
           <div class="approval-meta">
             ${uploadBadge("References", user.referenceUploaded, user.id, "reference", canView)}
-            ${uploadBadge("Valid ID", user.idUploaded, user.id, "id", canView)}
-            ${uploadBadge("Utility bill", user.billUploaded, user.id, "bill", canView)}
+            ${uploadBadge("Valid ID", user.idUploaded, user.id, "id", canView, user.idFormatVerified)}
+            ${uploadBadge("Utility bill", user.billUploaded, user.id, "bill", canView, user.billFormatVerified, user.billIssuerDetected)}
+            ${user.nameMatchesId === false ? `<span class="badge flagged">⚠️ Typed name doesn't match the ID - check manually</span>` : ""}
           </div>
           <div class="approval-actions">
             <select id="role-${user.id}">
@@ -449,15 +539,82 @@
       renderOverview();
     }
 
-    async function rejectUser(id) {
-      const reason = window.prompt("Reason for rejecting this registration (optional):") || "";
+    // Each option's autoCheck looks at the actual verification flags already
+    // shown on the card, so the reason the HOA sends lines up with what they
+    // saw - the applicant gets told specifically what to fix instead of a
+    // vague rejection.
+    const REJECT_REASON_OPTIONS = [
+      {
+        text: "ID document doesn't look like a valid ID",
+        autoCheck: user => user.idFormatVerified === false,
+      },
+      {
+        text: "Utility bill doesn't match a recognized format",
+        autoCheck: user => user.billFormatVerified === false,
+      },
+      {
+        text: "Documents are unclear, blurry, or illegible",
+        autoCheck: () => false,
+      },
+      {
+        text: "Reference could not be confirmed",
+        autoCheck: () => false,
+      },
+    ];
+
+    let rejectTargetId = null;
+
+    function rejectUser(id) {
+      const user = currentPendingList.find(u => u.id === id);
+      if (!user) return;
+
+      rejectTargetId = id;
+      document.getElementById("rejectModalSubtitle").textContent =
+        `${user.name} (${user.email}) - select what needs to be fixed:`;
+
+      document.getElementById("rejectReasonList").innerHTML = REJECT_REASON_OPTIONS.map((option, index) => `
+        <label>
+          <input type="checkbox" id="rejectReason-${index}" ${option.autoCheck(user) ? "checked" : ""} />
+          ${option.text}
+        </label>
+      `).join("");
+
+      document.getElementById("rejectDetails").value = "";
+      document.getElementById("rejectModal").classList.add("show");
+    }
+
+    function closeRejectModal() {
+      document.getElementById("rejectModal").classList.remove("show");
+      rejectTargetId = null;
+    }
+
+    async function confirmReject() {
+      if (!rejectTargetId) return;
+
+      const checkedReasons = REJECT_REASON_OPTIONS
+        .filter((option, index) => document.getElementById(`rejectReason-${index}`).checked)
+        .map(option => option.text);
+      const details = document.getElementById("rejectDetails").value.trim();
+
+      const parts = [...checkedReasons];
+      if (details) parts.push(details);
+      const reason = parts.join(". ");
+
+      if (!reason) {
+        showToast("Select at least one reason or add details.");
+        return;
+      }
+
+      const id = rejectTargetId;
       try {
         await window.Tit4TatAPI.rejectUser(id, reason);
       } catch (err) {
         showToast("Could not reject this user.");
         return;
       }
-      showToast("Registration rejected.");
+
+      closeRejectModal();
+      showToast("Registration rejected and applicant notified.");
       renderPending();
       renderOverview();
     }

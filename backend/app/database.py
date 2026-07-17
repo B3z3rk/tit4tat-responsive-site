@@ -33,6 +33,10 @@ _NEW_COLUMNS = [
     ("users", "mfa_required", "BOOLEAN DEFAULT 0"),
     ("users", "real_call_enabled", "BOOLEAN DEFAULT 0"),
     ("emergency_calls", "target_user_id", "INTEGER"),
+    ("users", "id_format_verified", "BOOLEAN"),
+    ("users", "utility_bill_format_verified", "BOOLEAN"),
+    ("users", "utility_bill_issuer_detected", "VARCHAR"),
+    ("users", "name_matches_id", "BOOLEAN"),
 ]
 
 

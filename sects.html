@@ -712,7 +712,8 @@
         <form class="form" id="registerForm" onsubmit="register(event)">
           <div class="form-group">
             <label for="fullName">Full Name</label>
-            <input id="fullName" type="text" placeholder="Enter your full name" required />
+            <input id="fullName" type="text" placeholder="Enter your full name" required onblur="checkNameAgainstId()" />
+            <p class="helper-text" id="nameMismatchNote" style="display:none; color: var(--warning);"></p>
           </div>
 
           <div class="form-group">
@@ -749,7 +750,7 @@
               <div class="upload-row" id="referenceUploadRow" onclick="document.getElementById('referenceFileInput').click()">
                 <div class="upload-icon icon-ref">🧾</div>
                 <div class="upload-row-text">
-                  <strong>References</strong>
+                  <strong>References (optional)</strong>
                   <span id="referenceUpload">Upload references document</span>
                 </div>
                 <input type="file" id="referenceFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" style="display:none;" onchange="handleDocUpload('reference', this.files[0])" />
@@ -758,7 +759,7 @@
               <div class="upload-row" id="idUploadRow" onclick="document.getElementById('idFileInput').click()">
                 <div class="upload-icon icon-id">🪪</div>
                 <div class="upload-row-text">
-                  <strong>Valid ID</strong>
+                  <strong>Valid ID (required)</strong>
                   <span id="idUpload">Upload a clear copy of your ID</span>
                 </div>
                 <input type="file" id="idFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" style="display:none;" onchange="handleDocUpload('id', this.files[0])" />
@@ -767,7 +768,7 @@
               <div class="upload-row" id="billUploadRow" onclick="document.getElementById('billFileInput').click()">
                 <div class="upload-icon icon-bill">📄</div>
                 <div class="upload-row-text">
-                  <strong>Utility Bill</strong>
+                  <strong>Utility Bill (required)</strong>
                   <span id="billUpload">Upload recent utility bill</span>
                 </div>
                 <input type="file" id="billFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" style="display:none;" onchange="handleDocUpload('bill', this.files[0])" />
@@ -935,6 +936,38 @@
       document.getElementById(`${key}Upload`).textContent = file.name;
       document.getElementById(`${key}UploadRow`).classList.add("uploaded");
       showToast("Document attached.");
+
+      if (key === "id") {
+        checkNameAgainstId();
+      }
+    }
+
+    // Soft, non-blocking heads-up only - never prevents submission. Runs
+    // whenever both a name and an ID are present: right after the ID is
+    // attached, and again if the name field is edited afterward.
+    async function checkNameAgainstId() {
+      const note = document.getElementById("nameMismatchNote");
+      const name = document.getElementById("fullName").value.trim();
+
+      if (!name || !uploads.id) {
+        note.style.display = "none";
+        return;
+      }
+
+      let result;
+      try {
+        result = await window.Tit4TatAPI.checkNameMatch(name, uploads.id);
+      } catch (err) {
+        note.style.display = "none";
+        return;
+      }
+
+      if (result.available && result.matches === false) {
+        note.textContent = "⚠ The name on your ID doesn't quite match what you typed. Double-check the spelling, or continue if this is correct - it'll still be reviewed.";
+        note.style.display = "block";
+      } else {
+        note.style.display = "none";
+      }
     }
 
     const UPLOAD_PLACEHOLDERS = {
@@ -953,6 +986,7 @@
         document.getElementById(`${key}Upload`).textContent = UPLOAD_PLACEHOLDERS[key];
         document.getElementById(`${key}UploadRow`).classList.remove("uploaded");
       }
+      document.getElementById("nameMismatchNote").style.display = "none";
 
       clearScannedReference();
     }
@@ -1165,6 +1199,14 @@
 
       if (!name || !email) {
         showToast("Please enter your full name and email.");
+        return;
+      }
+      if (!uploads.id) {
+        showToast("Please upload a clear copy of your ID.");
+        return;
+      }
+      if (!uploads.bill) {
+        showToast("Please upload a recent utility bill.");
         return;
       }
 

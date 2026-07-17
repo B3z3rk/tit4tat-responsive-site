@@ -133,7 +133,7 @@
 
       grid.innerHTML = CAMERAS.map(camera => `
         <div class="camera-card">
-          <video src="${camera.src}" controls preload="metadata" playsinline></video>
+          <video src="${camera.src}" controls controlsList="nodownload" loop preload="metadata" playsinline oncontextmenu="return false"></video>
           <div class="camera-card-body">
             <h3>${camera.label}</h3>
             <p>Live Stream.</p>

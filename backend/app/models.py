@@ -54,8 +54,19 @@ class User(Base):
     reference_path = Column(String, nullable=True)
     id_uploaded = Column(Boolean, default=False)
     id_path = Column(String, nullable=True)
+    # OCR-based soft check against known ID keyword patterns - NULL means
+    # verification wasn't available (Tesseract not installed) or the file
+    # predates this check, not that it failed. See document_verification.py.
+    id_format_verified = Column(Boolean, nullable=True)
+    # OCR-based soft check that the typed name appears on the uploaded ID -
+    # same NULL-means-unavailable convention as id_format_verified
+    name_matches_id = Column(Boolean, nullable=True)
     utility_bill_uploaded = Column(Boolean, default=False)
     utility_bill_path = Column(String, nullable=True)
+    utility_bill_format_verified = Column(Boolean, nullable=True)
+    # which known issuer (Digicel/FLOW/JPS/National Water Commission) the
+    # bill's OCR'd text matched, if any
+    utility_bill_issuer_detected = Column(String, nullable=True)
 
     # directory profile fields
     category = Column(String, nullable=True)

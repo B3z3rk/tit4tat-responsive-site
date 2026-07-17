@@ -107,6 +107,10 @@ def list_pending(db: DbSession = Depends(get_db)):
             referenceVerified=u.reference_user_id is not None,
             referenceUploaded=u.reference_uploaded, idUploaded=u.id_uploaded,
             billUploaded=u.utility_bill_uploaded,
+            idFormatVerified=u.id_format_verified,
+            billFormatVerified=u.utility_bill_format_verified,
+            billIssuerDetected=u.utility_bill_issuer_detected,
+            nameMatchesId=u.name_matches_id,
         )
         for u in users
     ]
@@ -165,6 +169,10 @@ def approve_user(
     # pick their own, so there's never a shared/known credential for the HOA
     # to relay (or for anyone else to intercept) in the first place.
     user.password_hash = hash_password(secrets.token_urlsafe(24))
+    # Every newly-approved account goes through MFA setup on its first real
+    # sign-in, regardless of role - not just Admin-tier accounts (which
+    # already require it unconditionally, see auth.login()).
+    user.mfa_required = True
     db.commit()
     db.refresh(user)
 
@@ -215,6 +223,24 @@ def reject_user(
     user.rejection_reason = payload.reason
     db.commit()
     _log(db, actor, "reject_user", user, detail=payload.reason)
+
+    # Without this, a rejected applicant has no way to find out - login
+    # deliberately gives the same generic "invalid credentials" message
+    # regardless of approval status, so email is the only channel. Their
+    # email stays free to register() again afterward (see the "rejected
+    # accounts can resubmit" handling there), so this also tells them how.
+    send_email(
+        to=user.email,
+        subject="Your Tit4Tat registration",
+        body=(
+            f"Hi {user.name},\n\n"
+            "Your Tit4Tat registration could not be approved at this time.\n\n"
+            f"Reason: {payload.reason or 'No specific reason was provided.'}\n\n"
+            "You're welcome to submit a corrected registration at any time using the "
+            f"same email address ({user.email}) with the corrected information or documents.\n\n"
+            "If you have questions, please contact your community's HOA directly.\n"
+        ),
+    )
 
 
 @router.get("/users", response_model=list[schemas.AdminUserOut])

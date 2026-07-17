@@ -70,6 +70,12 @@
     register(formData) {
       return requestMultipart("POST", "/api/auth/register", formData);
     },
+    checkNameMatch(name, idFile) {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("idFile", idFile);
+      return requestMultipart("POST", "/api/auth/check-name-match", formData);
+    },
     logout() {
       return request("POST", "/api/auth/logout");
     },
